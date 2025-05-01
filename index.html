@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TCS Manager - Start</title>
+  <link rel="stylesheet" href="style.css">
+<!-- iOS Web App Unterstützung -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TCS Manager">
+<link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <img src="Logo.png" alt="Vereinslogo" class="logo">
+    <h1>Vereinsverwaltung Tauchclub Simbach am Inn</h1>
+  </div>
+  <nav>
+    <a href="index.html">Start</a>
+    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+    <a href="verleih.html">Verleih</a>
+    <a href="equipment.html">Equipmentverwaltung</a>
+  </nav>
+</header>
+
+<main>
+  <section id="dashboard">
+    <h2>Dashboard</h2>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <h3>Aktive Mitglieder</h3>
+        <p id="active-members">Lade...</p>
+      </div>
+      <div class="card">
+        <h3>Inaktive Mitglieder</h3>
+        <p id="inactive-members">Lade...</p>
+      </div>
+      <div class="card">
+        <h3>Ungültige TTU</h3>
+        <p id="invalid-ttu">Lade...</p>
+      </div>
+      <div class="card">
+        <h3>Überfällige Wartungen</h3>
+        <p id="overdue-count">Lade...</p>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<script>
+// const apiMembers = 'http://localhost:3000/api/members';
+// const apiEquipment = 'http://localhost:3000/api/equipment';
+const apiMembers = 'http://raspberrypi:3000/api/members';
+const apiEquipment = 'http://raspberrypi:3000/api/equipment';
+
+
+async function loadDashboard() {
+  // Mitglieder laden
+  const membersResponse = await fetch(apiMembers);
+  const members = await membersResponse.json();
+  const today = new Date();
+
+  const active = members.filter(m => m.status === 'aktiv').length;
+  const inactive = members.filter(m => m.status !== 'aktiv').length;
+  const invalidTTU = members.filter(m => !m.ttu_gueltigkeit || new Date(m.ttu_gueltigkeit) < today).length;
+
+  document.getElementById('active-members').innerText = active;
+  document.getElementById('inactive-members').innerText = inactive;
+  document.getElementById('invalid-ttu').innerText = invalidTTU;
+
+  // Überfällige Wartungen korrekt berechnen
+  const equipmentResponse = await fetch(apiEquipment);
+  const equipmentList = await equipmentResponse.json();
+
+  const overdueEquipments = equipmentList.filter(eq => {
+    if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
+    const lastMaintenance = new Date(eq.letzte_wartung);
+    const nextMaintenance = new Date(lastMaintenance.setMonth(lastMaintenance.getMonth() + parseInt(eq.wartungsintervall)));
+    return nextMaintenance < today;
+  });
+
+  document.getElementById('overdue-count').innerText = overdueEquipments.length;
+}
+
+window.addEventListener('load', loadDashboard);
+</script>
+
+</body>
+</html>
