@@ -223,29 +223,47 @@ document.getElementById('search-equipment').addEventListener('input', () => {
   renderEquipmentTable(filtered);
 });
 
-document.getElementById('equipment-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const eq = {
-    name: document.getElementById('eq-name').value,
-    kategorie: document.getElementById('eq-kategorie').value,
-    beschreibung: document.getElementById('eq-beschreibung').value,
-    groesse: document.getElementById('eq-groesse').value,
-    letzte_wartung: document.getElementById('eq-letztewartung').value,
-    wartungsintervall: document.getElementById('eq-wartungsintervall').value,
-    status: document.getElementById('eq-status').value
-  };
-  const id = document.getElementById('eq-id').value;
-  const method = id ? 'PUT' : 'POST';
-  const url = id ? `${apiEquipment}/${id}` : apiEquipment;
+document.getElementById('eq-bildfile').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64 = e.target.result.split(',')[1];
+        document.getElementById('eq-bild-base64').value = base64;
 
-  fetch(url, {
-    method: method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(eq)
-  }).then(() => {
-    closeEquipmentModal();
-    fetchEquipmentAndCategories();
-  });
+        const img = document.getElementById('existing-image');
+        img.src = `data:image/jpeg;base64,${base64}`;
+        img.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+});
+
+document.getElementById('equipment-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const eq = {
+        name: document.getElementById('eq-name').value,
+        bild_base64: document.getElementById('eq-bild-base64').value, // <-- WICHTIG!!!
+        kategorie: document.getElementById('eq-kategorie').value,
+        beschreibung: document.getElementById('eq-beschreibung').value,
+        groesse: document.getElementById('eq-groesse').value,
+        letzte_wartung: document.getElementById('eq-letztewartung').value,
+        wartungsintervall: document.getElementById('eq-wartungsintervall').value,
+        status: document.getElementById('eq-status').value
+    };
+
+    const id = document.getElementById('eq-id').value;
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${apiEquipment}/${id}` : apiEquipment;
+
+    fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(eq)
+    }).then(() => {
+        closeEquipmentModal();
+        fetchEquipmentAndCategories();
+    });
 });
 
 document.addEventListener('DOMContentLoaded', checkLoginAndLoad);
