@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitgliederverwaltung - Tauchclub Simbach am Inn</title>
+    <title>Mitgliederverwaltung - TCS Manager</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,35 +24,35 @@
 </header>
 
 <main>
-    <section id="mitglieder">
-        <h2>Mitgliederverwaltung</h2>
+    <h2>Mitgliederverwaltung</h2>
 
-        <div style="margin-bottom: 20px;">
-            <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
-            <input type="text" id="search-members" placeholder="Mitglieder suchen...">
-        </div>
+    <div style="margin-bottom: 20px;">
+        <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
+        <input type="text" id="search-members" placeholder="Mitglieder suchen...">
+    </div>
 
-        <table id="members-table">
-            <thead>
-                <tr>
-                    <th>Vorname</th>
-                    <th>Name</th>
-                    <th>Straße</th>
-                    <th>Hausnummer</th>
-                    <th>PLZ</th>
-                    <th>Ort</th>
-                    <th>Telefon</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Aktion</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </section>
+    <table id="members-table">
+        <thead>
+            <tr>
+                <th>Vorname</th>
+                <th>Name</th>
+                <th>Straße</th>
+                <th>Hausnummer</th>
+                <th>PLZ</th>
+                <th>Ort</th>
+                <th>Telefon</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Aktion</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="member-cards"></div>
 </main>
 
-<!-- Modal -->
+<!-- Modal für Mitglieder hinzufügen/bearbeiten -->
 <div class="modal" id="memberModal">
     <div class="modal-content">
         <h2 id="modal-title">Neues Mitglied</h2>
@@ -98,7 +98,7 @@ function logout() {
     window.location.href = "login.html";
 }
 
-// Burger Menü
+// Burger-Menü
 function toggleMenu() {
     document.getElementById('main-nav').classList.toggle('show');
 }
@@ -118,17 +118,19 @@ function fetchMembers() {
 
 function renderMembersTable(data, highlight = '') {
     const tbody = document.querySelector('#members-table tbody');
+    const cardsContainer = document.querySelector('.member-cards');
     tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
 
     data.forEach(member => {
-        const tr = document.createElement('tr');
-
         const highlightText = (text) => {
             if (!highlight) return text;
             const regex = new RegExp(`(${highlight})`, 'gi');
             return (text + '').replace(regex, '<mark>$1</mark>');
         };
 
+        // Tabelle (Desktop)
+        const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${highlightText(member.vorname)}</td>
             <td>${highlightText(member.name)}</td>
@@ -142,29 +144,33 @@ function renderMembersTable(data, highlight = '') {
             <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
         `;
         tbody.appendChild(tr);
+
+        // Kacheln (Mobil)
+        const card = document.createElement('div');
+        card.className = "member-card";
+        card.innerHTML = `
+            <h3>${highlightText(member.vorname)} ${highlightText(member.name)}</h3>
+            <p>📍 ${highlightText(member.strasse)} ${highlightText(member.hausnummer)}, ${highlightText(member.plz)} ${highlightText(member.ort)}</p>
+            <p>📞 ${highlightText(member.telefon)}</p>
+            <p>✉️ ${highlightText(member.email)}</p>
+            <p>Status: ${highlightText(member.status)}</p>
+            <button onclick='openEditMemberModal(${JSON.stringify(member)})'>Bearbeiten</button>
+        `;
+        cardsContainer.appendChild(card);
     });
 }
 
 function applyMemberSearch() {
     const query = document.getElementById('search-members').value.toLowerCase();
-
-    const filtered = membersData.filter(member => {
-        return Object.values(member).some(val =>
+    const filtered = membersData.filter(member =>
+        Object.values(member).some(val =>
             (val + '').toLowerCase().includes(query)
-        );
-    });
-
+        )
+    );
     renderMembersTable(filtered, query);
 }
 
-const searchInput = document.getElementById('search-members');
-searchInput.addEventListener('input', applyMemberSearch);
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        searchInput.value = '';
-        renderMembersTable(membersData);
-    }
-});
+document.getElementById('search-members').addEventListener('input', applyMemberSearch);
 
 function openAddMemberModal() {
     document.getElementById('modal-title').innerText = "Neues Mitglied";

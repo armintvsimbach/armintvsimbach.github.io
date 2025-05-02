@@ -12,7 +12,6 @@ header {
     color: white;
     padding: 20px;
     text-align: center;
-    position: relative;
 }
 
 .header-container {
@@ -20,7 +19,6 @@ header {
     align-items: center;
     justify-content: center;
     gap: 20px;
-    position: relative;
 }
 
 .logo {
@@ -135,7 +133,7 @@ input[type="text"], input[type="email"], input[type="date"], select {
     width: 100%;
 }
 
-/* Dashboard Styles */
+/* Dashboard Styles (Kacheln für Übersicht) */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -167,59 +165,31 @@ input[type="text"], input[type="email"], input[type="date"], select {
 .card.ttu { background-color: #fff8e1; }
 .card.wartung { background-color: #ffe0b2; }
 
-/* Burger Menu Styles */
-.burger {
-    display: none;
-    font-size: 28px;
-    cursor: pointer;
-    color: white;
-    position: absolute;
-    left: 20px;
-    top: 25px;
+/* Kachel-Ansicht für Mitglieder auf Mobil */
+.member-card {
+    background-color: white;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.05);
 }
 
+.member-card h3 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.member-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.member-cards {
+    display: none;
+}
+
+/* Responsive (Mobile first optimiert für iPhone / Android) */
 @media (max-width: 600px) {
-    .header-container {
-        justify-content: center;
-    }
-
-    .header-container h1 {
-        font-size: 18px; /* kleiner für iOS Ansicht */
-    }
-
-    .burger {
-        display: block;
-        left: 10px;
-        top: 18px;
-    }
-
-    nav {
-        display: none;
-        flex-direction: column;
-        background-color: #005a99;
-        text-align: left;
-        padding-left: 20px;
-    }
-
-    nav.show {
-        display: flex;
-    }
-
-    nav a {
-        margin: 10px 0;
-        font-size: 18px;
-    }
-
-    /* Dashboard mobil einspaltig */
-    .dashboard {
-        display: block;
-    }
-
-    .card {
-        margin-bottom: 10px;
-    }
-
-    /* Tabellen mobil */
     table, thead, tbody, th, td, tr {
         display: block;
         width: 100%;
@@ -244,5 +214,21 @@ input[type="text"], input[type="email"], input[type="date"], select {
 
     .modal-content {
         width: 95%;
+    }
+
+    .dashboard {
+        display: block;
+    }
+
+    .card {
+        margin-bottom: 10px;
+    }
+
+    .member-cards {
+        display: block;
+    }
+
+    #members-table {
+        display: none;
     }
 }
