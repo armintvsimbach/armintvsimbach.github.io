@@ -1,301 +1,215 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mitgliederverwaltung - Tauchclub Simbach am Inn</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mitgliederverwaltung - Tauchclub Simbach am Inn</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <div class="header-container">
-    <img src="Logo.png" alt="Vereinslogo" class="logo">
-    <h1>Vereinsverwaltung Tauchclub Simbach am Inn</h1>
-  </div>
-  <nav>
-    <a href="index.html">Start</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="verleih.html">Verleih</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-  </nav>
-
+    <div class="header-container">
+        <img src="logo-placeholder.png" alt="Vereinslogo" class="logo">
+        <h1>Vereinsverwaltung Tauchclub Simbach am Inn</h1>
+    </div>
+    <nav>
+        <a href="index.html">Start</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 </header>
 
 <main>
-  <section id="members">
-    <h2>Mitgliederverwaltung</h2>
+    <section id="mitglieder">
+        <h2>Mitgliederverwaltung</h2>
 
-    <input type="text" id="search" placeholder="Mitglied suchen..." style="width: 100%; padding: 10px; margin-bottom: 15px;">
-    <ul id="search-results" style="list-style: none; padding: 0; margin-bottom: 20px;"></ul>
+        <div style="margin-bottom: 20px;">
+            <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
+            <input type="text" id="search-members" placeholder="Mitglieder suchen...">
+        </div>
 
-    <button onclick="openAddModal()">➕ Mitglied hinzufügen</button>
-
-    <table id="members-table">
-      <thead>
-        <tr>
-          <th>Vorname</th>
-          <th>Name</th>
-          <th>Mobil</th>
-          <th>Email</th>
-          <th>Status</th>
-          <th>TTU</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+        <table id="members-table">
+            <thead>
+                <tr>
+                    <th>Vorname</th>
+                    <th>Name</th>
+                    <th>Straße</th>
+                    <th>Hausnummer</th>
+                    <th>PLZ</th>
+                    <th>Ort</th>
+                    <th>Telefon</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
 </main>
 
-<!-- Modal-Dialoge für Anzeigen und Bearbeiten kommen hier (wie bisher) -->
-
-<script>
-// Dein JavaScript-Code für Mitgliederverwaltung hier (gleicher wie vorher)
-</script>
-
-</body>
-</html>
-
-<!-- Modal: Mitglied hinzufügen -->
-<div class="modal" id="addModal">
-  <div class="modal-content">
-    <h2>Neues Mitglied hinzufügen</h2>
-    <form id="add-form">
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-        <tr><td><strong>Vorname:</strong></td><td><input type="text" id="add-vorname" required></td></tr>
-        <tr><td><strong>Name:</strong></td><td><input type="text" id="add-name" required></td></tr>
-        <tr><td><strong>Straße:</strong></td><td><input type="text" id="add-strasse"></td></tr>
-        <tr><td><strong>Hausnummer:</strong></td><td><input type="text" id="add-hausnummer"></td></tr>
-        <tr><td><strong>Postleitzahl:</strong></td><td><input type="text" id="add-plz"></td></tr>
-        <tr><td><strong>Ort:</strong></td><td><input type="text" id="add-ort"></td></tr>
-        <tr><td><strong>Land:</strong></td><td><input type="text" id="add-land"></td></tr>
-        <tr><td><strong>Telefon:</strong></td><td><input type="text" id="add-telefon"></td></tr>
-        <tr><td><strong>Mobil:</strong></td><td><input type="text" id="add-mobil"></td></tr>
-        <tr><td><strong>Email:</strong></td><td><input type="email" id="add-email" required></td></tr>
-        <tr><td><strong>Status:</strong></td><td><input type="text" id="add-status" required></td></tr>
-        <tr><td><strong>TTU Gültigkeit:</strong></td><td><input type="date" id="add-ttu"></td></tr>
-      </table>
-      <button type="submit">Speichern</button>
-      <button type="button" onclick="closeAddModal()" class="close-button">Abbrechen</button>
-    </form>
-  </div>
-</div>
-
-
-<!-- Modal: Mitglied bearbeiten -->
-<div class="modal" id="editModal">
-  <div class="modal-content">
-    <h2>Mitglied bearbeiten</h2>
-    <form id="edit-form">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td><strong>Vorname:</strong></td><td><input type="text" id="edit-vorname" required></td></tr>
-        <tr><td><strong>Name:</strong></td><td><input type="text" id="edit-name" required></td></tr>
-        <tr><td><strong>Straße:</strong></td><td><input type="text" id="edit-strasse"></td></tr>
-        <tr><td><strong>Hausnummer:</strong></td><td><input type="text" id="edit-hausnummer"></td></tr>
-        <tr><td><strong>Postleitzahl:</strong></td><td><input type="text" id="edit-plz"></td></tr>
-        <tr><td><strong>Ort:</strong></td><td><input type="text" id="edit-ort"></td></tr>
-        <tr><td><strong>Land:</strong></td><td><input type="text" id="edit-land"></td></tr>
-        <tr><td><strong>Telefon:</strong></td><td><input type="text" id="edit-telefon"></td></tr>
-        <tr><td><strong>Mobil:</strong></td><td><input type="text" id="edit-mobil"></td></tr>
-        <tr><td><strong>Email:</strong></td><td><input type="email" id="edit-email" required></td></tr>
-        <tr><td><strong>Status:</strong></td><td><input type="text" id="edit-status" required></td></tr>
-        <tr><td><strong>TTU Gültigkeit:</strong></td><td><input type="date" id="edit-ttu"></td></tr>
-      </table>
-      <input type="hidden" id="edit-id">
-      <button type="submit">Aktualisieren</button>
-      <button type="button" onclick="closeEditModal()" class="close-button">Abbrechen</button>
-    </form>
-  </div>
-</div>
-
-
-<!-- Modal: Mitglied readonly ansehen -->
-<div class="modal" id="viewModal">
-  <div class="modal-content" id="view-content">
-    <h2>Mitgliedsdaten ansehen</h2>
-    <div id="view-fields"></div>
-    <button onclick="closeViewModal()">Schließen</button>
-  </div>
+<!-- Mitglied-Modal -->
+<div class="modal" id="memberModal">
+    <div class="modal-content">
+        <h2 id="modal-title">Neues Mitglied</h2>
+        <form id="member-form">
+            <table style="width: 100%;">
+                <tr><td>Vorname:</td><td><input type="text" id="m-vorname" required></td></tr>
+                <tr><td>Name:</td><td><input type="text" id="m-name" required></td></tr>
+                <tr><td>Straße:</td><td><input type="text" id="m-strasse"></td></tr>
+                <tr><td>Hausnummer:</td><td><input type="text" id="m-hausnummer"></td></tr>
+                <tr><td>PLZ:</td><td><input type="text" id="m-plz"></td></tr>
+                <tr><td>Ort:</td><td><input type="text" id="m-ort"></td></tr>
+                <tr><td>Land:</td><td><input type="text" id="m-land"></td></tr>
+                <tr><td>Telefon:</td><td><input type="text" id="m-telefon"></td></tr>
+                <tr><td>Mobil:</td><td><input type="text" id="m-mobil"></td></tr>
+                <tr><td>Email:</td><td><input type="email" id="m-email"></td></tr>
+                <tr><td>Status:</td><td><input type="text" id="m-status"></td></tr>
+                <tr><td>TTU Gültigkeit:</td><td><input type="date" id="m-ttu"></td></tr>
+            </table>
+            <input type="hidden" id="m-id">
+            <button type="submit">Speichern</button>
+            <button type="button" onclick="closeMemberModal()">Abbrechen</button>
+        </form>
+    </div>
 </div>
 
 <script>
-// const apiBase = 'http://localhost:3000/api/members'
-const apiBase = 'http://raspberrypi:3000/api/members';
-
 let membersData = [];
 
 function fetchMembers() {
-  fetch(apiBase)
-    .then(res => res.json())
-    .then(members => {
-      members.sort((a, b) => a.name.localeCompare(b.name)); // Nach Name sortieren
-      membersData = members;
-      renderTable();
+    fetch("http://localhost:3000/api/members")
+        .then(res => res.json())
+        .then(data => {
+            membersData = data;
+            renderMembersTable(membersData);
+        });
+}
+
+function renderMembersTable(data, highlight = '') {
+    const tbody = document.querySelector('#members-table tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(member => {
+        const tr = document.createElement('tr');
+
+        const highlightText = (text) => {
+            if (!highlight) return text;
+            const regex = new RegExp(`(${highlight})`, 'gi');
+            return (text + '').replace(regex, '<mark>$1</mark>');
+        };
+
+        tr.innerHTML = `
+            <td>${highlightText(member.vorname)}</td>
+            <td>${highlightText(member.name)}</td>
+            <td>${highlightText(member.strasse)}</td>
+            <td>${highlightText(member.hausnummer)}</td>
+            <td>${highlightText(member.plz)}</td>
+            <td>${highlightText(member.ort)}</td>
+            <td>${highlightText(member.telefon)}</td>
+            <td>${highlightText(member.email)}</td>
+            <td>${highlightText(member.status)}</td>
+            <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
+        `;
+        tbody.appendChild(tr);
     });
 }
 
-function renderTable() {
-  const tbody = document.querySelector('#members-table tbody');
-  tbody.innerHTML = '';
-  membersData.forEach(member => {
-    const today = new Date();
-    const ttuDate = member.ttu_gueltigkeit ? new Date(member.ttu_gueltigkeit) : null;
-    const ttuIcon = ttuDate && ttuDate > today ? '✔️' : '❌';
+function applyMemberSearch() {
+    const query = document.getElementById('search-members').value.toLowerCase();
 
-    const tr = document.createElement('tr');
-    tr.style.cursor = 'pointer';
-    tr.onclick = () => viewMember(member); // Klick auf Zeile öffnet Ansicht
+    const filtered = membersData.filter(member => {
+        return Object.values(member).some(val => 
+            (val + '').toLowerCase().includes(query)
+        );
+    });
 
-    tr.innerHTML = `
-      <td>${member.vorname}</td>
-      <td>${member.name}</td>
-      <td>${member.mobil || '-'}</td>
-      <td>${member.email}</td>
-      <td>${member.status}</td>
-      <td style="text-align: center;">${ttuIcon}</td>
-      <td>
-        <button onclick='openEditModal(${JSON.stringify(member)}); event.stopPropagation();'>✏️ Bearbeiten</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+    renderMembersTable(filtered, query);
 }
 
-function openAddModal() {
-  document.getElementById('addModal').style.display = 'flex';
-}
-
-function closeAddModal() {
-  document.getElementById('addModal').style.display = 'none';
-}
-
-function openEditModal(member) {
-  document.getElementById('edit-id').value = member.id;
-  document.getElementById('edit-vorname').value = member.vorname;
-  document.getElementById('edit-name').value = member.name;
-  document.getElementById('edit-strasse').value = member.strasse;
-  document.getElementById('edit-hausnummer').value = member.hausnummer;
-  document.getElementById('edit-plz').value = member.plz;
-  document.getElementById('edit-ort').value = member.ort;
-  document.getElementById('edit-land').value = member.land;
-  document.getElementById('edit-telefon').value = member.telefon;
-  document.getElementById('edit-mobil').value = member.mobil;
-  document.getElementById('edit-email').value = member.email;
-  document.getElementById('edit-status').value = member.status;
-  document.getElementById('edit-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0,10) : '';
-  document.getElementById('editModal').style.display = 'flex';
-}
-
-function closeEditModal() {
-  document.getElementById('editModal').style.display = 'none';
-}
-
-function viewMember(member) {
-  const fieldsHtml = `
-    <table style="width: 100%; border-collapse: collapse;">
-      <tr><td><strong>Vorname:</strong></td><td>${member.vorname || '-'}</td></tr>
-      <tr><td><strong>Name:</strong></td><td>${member.name || '-'}</td></tr>
-      <tr><td><strong>Mobil:</strong></td><td>${member.mobil || '-'}</td></tr>
-      <tr><td><strong>Email:</strong></td><td>${member.email || '-'}</td></tr>
-      <tr><td><strong>Status:</strong></td><td>${member.status || '-'}</td></tr>
-      <tr><td><strong>TTU Gültigkeit:</strong></td><td>${member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0,10) : '-'}</td></tr>
-      <tr><td><strong>Straße:</strong></td><td>${member.strasse || '-'}</td></tr>
-      <tr><td><strong>Hausnummer:</strong></td><td>${member.hausnummer || '-'}</td></tr>
-      <tr><td><strong>Postleitzahl:</strong></td><td>${member.plz || '-'}</td></tr>
-      <tr><td><strong>Ort:</strong></td><td>${member.ort || '-'}</td></tr>
-      <tr><td><strong>Land:</strong></td><td>${member.land || '-'}</td></tr>
-      <tr><td><strong>Telefon:</strong></td><td>${member.telefon || '-'}</td></tr>
-    </table>
-  `;
-  document.getElementById('view-fields').innerHTML = fieldsHtml;
-  document.getElementById('viewModal').style.display = 'flex';
-}
-
-
-function closeViewModal() {
-  document.getElementById('viewModal').style.display = 'none';
-}
-
-// Suchfeld live aktualisieren
-const searchInput = document.getElementById('search');
-const searchResults = document.getElementById('search-results');
-
-searchInput.addEventListener('input', () => {
-  const query = searchInput.value.toLowerCase();
-  if (!query) {
-    searchResults.innerHTML = '';
-    return;
-  }
-
-  const results = membersData.filter(m => 
-    Object.values(m).some(value => value && value.toString().toLowerCase().includes(query))
-  ).slice(0, 3);
-
-  searchResults.innerHTML = results.map(m =>
-    `<li style="padding:5px; cursor:pointer;" onclick='viewMember(${JSON.stringify(m)})'>
-      ${m.vorname} ${m.name} (${m.email})
-    </li>`
-  ).join('');
+const searchInput = document.getElementById('search-members');
+searchInput.addEventListener('input', applyMemberSearch);
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+        searchInput.value = '';
+        renderMembersTable(membersData);
+    }
 });
 
-// Formular: Mitglied anlegen
-document.getElementById('add-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const newMember = {
-    vorname: document.getElementById('add-vorname').value,
-    name: document.getElementById('add-name').value,
-    strasse: document.getElementById('add-strasse').value,
-    hausnummer: document.getElementById('add-hausnummer').value,
-    plz: document.getElementById('add-plz').value,
-    ort: document.getElementById('add-ort').value,
-    land: document.getElementById('add-land').value,
-    telefon: document.getElementById('add-telefon').value,
-    mobil: document.getElementById('add-mobil').value,
-    email: document.getElementById('add-email').value,
-    status: document.getElementById('add-status').value,
-    ttu_gueltigkeit: document.getElementById('add-ttu').value
-  };
-  fetch(apiBase, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newMember)
-  }).then(() => {
-    closeAddModal();
-    fetchMembers();
-  });
+function openAddMemberModal() {
+    document.getElementById('modal-title').innerText = "Neues Mitglied";
+    document.getElementById('member-form').reset();
+    document.getElementById('m-id').value = '';
+    document.getElementById('memberModal').style.display = 'flex';
+}
+
+function openEditMemberModal(member) {
+    openAddMemberModal();
+    document.getElementById('modal-title').innerText = "Mitglied bearbeiten";
+    document.getElementById('m-id').value = member.id;
+    document.getElementById('m-vorname').value = member.vorname;
+    document.getElementById('m-name').value = member.name;
+    document.getElementById('m-strasse').value = member.strasse;
+    document.getElementById('m-hausnummer').value = member.hausnummer;
+    document.getElementById('m-plz').value = member.plz;
+    document.getElementById('m-ort').value = member.ort;
+    document.getElementById('m-land').value = member.land;
+    document.getElementById('m-telefon').value = member.telefon;
+    document.getElementById('m-mobil').value = member.mobil;
+    document.getElementById('m-email').value = member.email;
+    document.getElementById('m-status').value = member.status;
+    document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0,10) : '';
+}
+
+function closeMemberModal() {
+    document.getElementById('memberModal').style.display = 'none';
+}
+
+document.getElementById('member-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const member = {
+        vorname: document.getElementById('m-vorname').value,
+        name: document.getElementById('m-name').value,
+        strasse: document.getElementById('m-strasse').value,
+        hausnummer: document.getElementById('m-hausnummer').value,
+        plz: document.getElementById('m-plz').value,
+        ort: document.getElementById('m-ort').value,
+        land: document.getElementById('m-land').value,
+        telefon: document.getElementById('m-telefon').value,
+        mobil: document.getElementById('m-mobil').value,
+        email: document.getElementById('m-email').value,
+        status: document.getElementById('m-status').value,
+        ttu_gueltigkeit: document.getElementById('m-ttu').value
+    };
+
+    const id = document.getElementById('m-id').value;
+
+    if (id) {
+        fetch(`http://localhost:3000/api/members/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(member)
+        }).then(() => {
+            closeMemberModal();
+            fetchMembers();
+        });
+    } else {
+        fetch("http://localhost:3000/api/members", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(member)
+        }).then(() => {
+            closeMemberModal();
+            fetchMembers();
+        });
+    }
 });
 
-// Formular: Mitglied bearbeiten
-document.getElementById('edit-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const id = document.getElementById('edit-id').value;
-  const updatedMember = {
-    vorname: document.getElementById('edit-vorname').value,
-    name: document.getElementById('edit-name').value,
-    strasse: document.getElementById('edit-strasse').value,
-    hausnummer: document.getElementById('edit-hausnummer').value,
-    plz: document.getElementById('edit-plz').value,
-    ort: document.getElementById('edit-ort').value,
-    land: document.getElementById('edit-land').value,
-    telefon: document.getElementById('edit-telefon').value,
-    mobil: document.getElementById('edit-mobil').value,
-    email: document.getElementById('edit-email').value,
-    status: document.getElementById('edit-status').value,
-    ttu_gueltigkeit: document.getElementById('edit-ttu').value
-  };
-  fetch(`${apiBase}/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(updatedMember)
-  }).then(() => {
-    closeEditModal();
-    fetchMembers();
-  });
-});
-
-// Initial
-fetchMembers();
+document.addEventListener('DOMContentLoaded', fetchMembers);
 </script>
 
 </body>

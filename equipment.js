@@ -1,7 +1,7 @@
 // const apiEquipment = 'http://localhost:3000/api/equipment';
 // const apiCategories = 'http://localhost:3000/api/categories';
-const apiEquipment = 'http://raspberrypi:3000/api/equipment';
-const apiCategories = 'http://raspberrypi:3000/api/categories';
+const apiEquipment = 'http://localhost:3000/api/equipment';
+const apiCategories = 'http://localhost:3000/api/categories';
 let equipmentData = [];
 let categories = [];
 
