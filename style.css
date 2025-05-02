@@ -314,4 +314,15 @@ input[type="text"], input[type="email"], input[type="date"], input[type="passwor
         margin: 10px 0;
         font-size: 18px;
     }
+
+@media (max-width: 600px) {
+    input[type="text"], input[type="email"], input[type="date"], input[type="password"], select {
+        width: 95%;
+    }
+
+@media (max-width: 600px) {
+    #r-member {
+        width: 95%;
+        max-width: 350px;
+    }
 }
