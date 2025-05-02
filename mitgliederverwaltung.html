@@ -24,13 +24,13 @@
         <a href="admin.html">Admin</a>
     </nav>
 </header>
-
+<div id="user-info" style="text-align: center; padding: 10px;"></div>
 <main>
     <h2>Mitgliederverwaltung</h2>
 
     <div style="margin-bottom: 20px;">
         <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
-        <input type="text" id="search-members" placeholder="Mitglieder suchen...">
+        <input type="text" id="search-members" placeholder="Mitglieder suchen.">
     </div>
 
     <table id="members-table">
@@ -43,7 +43,7 @@
                 <th>PLZ</th>
                 <th>Ort</th>
                 <th>Telefon</th>
-				<th>Mobil</th>
+                <th>Mobil</th>
                 <th>Email</th>
                 <th>Status</th>
                 <th>Aktion</th>
@@ -55,7 +55,7 @@
     <div class="member-cards"></div>
 </main>
 
-<!-- Modal für Mitglieder hinzufügen/bearbeiten -->
+<!-- Mitglied-Modal -->
 <div class="modal" id="memberModal">
     <div class="modal-content">
         <h2 id="modal-title">Neues Mitglied</h2>
@@ -81,31 +81,8 @@
     </div>
 </div>
 
-<div id="user-info" style="text-align: center; padding: 10px;"></div>
-
 <script src="shared.js"></script>
 <script>
-// Benutzer prüfen
-checkLogin();
-
-const user = getUserInfo();
-if (user) {
-    document.getElementById('user-info').innerHTML = `
-        Angemeldet als <strong>${user.username}</strong> (${user.role})
-        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-    `;
-}
-
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
-}
-
-// Burger-Menü
-function toggleMenu() {
-    document.getElementById('main-nav').classList.toggle('show');
-}
-
 let membersData = [];
 
 function fetchMembers() {
@@ -132,7 +109,7 @@ function renderMembersTable(data, highlight = '') {
             return (text + '').replace(regex, '<mark>$1</mark>');
         };
 
-        // Tabelle (Desktop)
+        // Tabellenansicht (Desktop)
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${highlightText(member.vorname)}</td>
@@ -142,23 +119,24 @@ function renderMembersTable(data, highlight = '') {
             <td>${highlightText(member.plz)}</td>
             <td>${highlightText(member.ort)}</td>
             <td>${highlightText(member.telefon)}</td>
-			<td>${highlightText(member.mobil)}</td> <!-- NEU -->
+            <td>${highlightText(member.mobil)}</td>
             <td>${highlightText(member.email)}</td>
             <td>${highlightText(member.status)}</td>
             <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
         `;
         tbody.appendChild(tr);
 
-        // Kacheln (Mobil)
+        // Kartenansicht (mobil)
         const card = document.createElement('div');
         card.className = "member-card";
         card.innerHTML = `
-            <h3>${highlightText(member.vorname)} ${highlightText(member.name)}</h3>
-            <p>📍 ${highlightText(member.strasse)} ${highlightText(member.hausnummer)}, ${highlightText(member.plz)} ${highlightText(member.ort)}</p>
-            <p>📞 ${highlightText(member.telefon)}</p>
-			<p>📞 ${member.mobil}</p> <!-- NEU -->
-            <p>✉️ ${highlightText(member.email)}</p>
-            <p>Status: ${highlightText(member.status)}</p>
+            <h3>${member.vorname} ${member.name}</h3>
+            <p>Straße: ${member.strasse} ${member.hausnummer}</p>
+            <p>PLZ / Ort: ${member.plz} ${member.ort}</p>
+            <p>Telefon: <a href="tel:${member.telefon}">${member.telefon}</a></p>
+            <p>Mobil: <a href="tel:${member.mobil}">${member.mobil}</a></p>
+            <p>Email: <a href="mailto:${member.email}">${member.email}</a></p>
+            <p>Status: ${member.status}</p>
             <button onclick='openEditMemberModal(${JSON.stringify(member)})'>Bearbeiten</button>
         `;
         cardsContainer.appendChild(card);
@@ -168,14 +146,19 @@ function renderMembersTable(data, highlight = '') {
 function applyMemberSearch() {
     const query = document.getElementById('search-members').value.toLowerCase();
     const filtered = membersData.filter(member =>
-        Object.values(member).some(val =>
-            (val + '').toLowerCase().includes(query)
-        )
+        Object.values(member).some(val => (val + '').toLowerCase().includes(query))
     );
     renderMembersTable(filtered, query);
 }
 
-document.getElementById('search-members').addEventListener('input', applyMemberSearch);
+const searchInput = document.getElementById('search-members');
+searchInput.addEventListener('input', applyMemberSearch);
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+        searchInput.value = '';
+        renderMembersTable(membersData);
+    }
+});
 
 function openAddMemberModal() {
     document.getElementById('modal-title').innerText = "Neues Mitglied";
@@ -199,7 +182,7 @@ function openEditMemberModal(member) {
     document.getElementById('m-mobil').value = member.mobil;
     document.getElementById('m-email').value = member.email;
     document.getElementById('m-status').value = member.status;
-    document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0,10) : '';
+    document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0, 10) : '';
 }
 
 function closeMemberModal() {
@@ -225,13 +208,12 @@ document.getElementById('member-form').addEventListener('submit', (e) => {
     };
 
     const id = document.getElementById('m-id').value;
+    const url = id ? `https://tcs-manager-backend.onrender.com/api/members/${id}` : "https://tcs-manager-backend.onrender.com/api/members";
+    const method = id ? 'PUT' : 'POST';
 
-    fetch(`https://tcs-manager-backend.onrender.com/api/members${id ? '/' + id : ''}`, {
-        method: id ? 'PUT' : 'POST',
-        headers: {
-            "Authorization": "Bearer " + localStorage.getItem("token"),
-            "Content-Type": "application/json"
-        },
+    fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
         body: JSON.stringify(member)
     }).then(() => {
         closeMemberModal();
@@ -240,6 +222,22 @@ document.getElementById('member-form').addEventListener('submit', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', fetchMembers);
+
+// Benutzerinfo + Logout
+checkLogin();
+const user = getUserInfo();
+if (user) {
+    document.getElementById('user-info').innerHTML = `
+        <strong>${user.username}</strong> (${user.role})
+        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
+    `;
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
+}
+
 </script>
 
 </body>
