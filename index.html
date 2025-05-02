@@ -1,33 +1,21 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TCS Manager</title>
-  <link rel="stylesheet" href="style.css">
-<!-- iOS Web App Unterstützung -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="TCS Manager">
-<link rel="apple-touch-icon" href="icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCS Manager - Übersicht</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <div class="header-container">
-  <div class="burger" onclick="toggleMenu()">☰</div>
-	<nav id="main-nav">
-    <a href="index.html">Start</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="verleih.html">Verleih</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="admin.html">Admin</a>
-	</nav>
-    <img src="Logo.png" alt="Vereinslogo" class="logo">
-    <h1>Tauchclub Simbach am Inn</h1>
-  </div>
-  <div id="user-info" style="float:right; padding: 10px; color: white;"></div>
-    <nav>
+    <div class="header-container">
+        <img src="Logo.png" alt="Vereinslogo" class="logo">
+        <h1>Vereinsverwaltung Tauchclub Simbach am Inn</h1>
+    </div>
+
+    <div class="burger" onclick="toggleMenu()">☰</div>
+    <nav id="main-nav">
         <a href="index.html">Start</a>
         <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
         <a href="verleih.html">Verleih</a>
@@ -37,74 +25,38 @@
 </header>
 
 <main>
-  <section id="dashboard">
-<h2>Dashboard</h2>
-<div class="dashboard">
-    <div class="card active">
-        <h3>Aktive Mitglieder</h3>
-        <p id="active-members">0</p>
-    </div>
-    <div class="card inactive">
-        <h3>Inaktive Mitglieder</h3>
-        <p id="inactive-members">0</p>
-    </div>
-    <div class="card ttu">
-        <h3>Ungültige TTU</h3>
-        <p id="invalid-ttu">0</p>
-    </div>
-    <div class="card wartung">
-        <h3>Überfällige Wartungen</h3>
-        <p id="overdue-maintenance">0</p>
-    </div>
-</div>
+    <h2>Dashboard</h2>
 
-  </section>
+    <div class="dashboard">
+        <div class="card active">
+            <h3>Aktive Mitglieder</h3>
+            <p id="active-members">0</p>
+        </div>
+        <div class="card inactive">
+            <h3>Inaktive Mitglieder</h3>
+            <p id="inactive-members">0</p>
+        </div>
+        <div class="card ttu">
+            <h3>Ungültige TTU</h3>
+            <p id="invalid-ttu">0</p>
+        </div>
+        <div class="card wartung">
+            <h3>Überfällige Wartungen</h3>
+            <p id="overdue-maintenance">0</p>
+        </div>
+    </div>
 </main>
+
+<div id="user-info" style="text-align: center; padding: 10px;"></div>
+
 <script src="shared.js"></script>
 <script>
-// const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
-// const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
-const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
-const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
-
-
-async function loadDashboard() {
-  // Mitglieder laden
-  const membersResponse = await fetch(apiMembers);
-  const members = await membersResponse.json();
-  const today = new Date();
-
-  const active = members.filter(m => m.status === 'aktiv').length;
-  const inactive = members.filter(m => m.status !== 'aktiv').length;
-  const invalidTTU = members.filter(m => !m.ttu_gueltigkeit || new Date(m.ttu_gueltigkeit) < today).length;
-
-  document.getElementById('active-members').innerText = active;
-  document.getElementById('inactive-members').innerText = inactive;
-  document.getElementById('invalid-ttu').innerText = invalidTTU;
-
-  // Überfällige Wartungen korrekt berechnen
-  const equipmentResponse = await fetch(apiEquipment);
-  const equipmentList = await equipmentResponse.json();
-
-  const overdueEquipments = equipmentList.filter(eq => {
-    if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
-    const lastMaintenance = new Date(eq.letzte_wartung);
-    const nextMaintenance = new Date(lastMaintenance.setMonth(lastMaintenance.getMonth() + parseInt(eq.wartungsintervall)));
-    return nextMaintenance < today;
-  });
-
-  document.getElementById('overdue-count').innerText = overdueEquipments.length;
-}
-
-window.addEventListener('load', loadDashboard);
-
 checkLogin();
 
-// User anzeigen + Logout
 const user = getUserInfo();
 if (user) {
     document.getElementById('user-info').innerHTML = `
-        <strong>${user.username}</strong> (${user.role})
+        Angemeldet als <strong>${user.username}</strong> (${user.role}) 
         <button onclick="logout()" style="margin-left: 10px;">Logout</button>
     `;
 }
@@ -114,10 +66,17 @@ function logout() {
     window.location.href = "login.html";
 }
 
+// Burger-Menü Funktion
 function toggleMenu() {
     document.getElementById('main-nav').classList.toggle('show');
 }
 
+// Dashboard Beispielzahlen (kann später per API geladen werden)
+document.getElementById('active-members').innerText = 24;
+document.getElementById('inactive-members').innerText = 4;
+document.getElementById('invalid-ttu').innerText = 3;
+document.getElementById('overdue-maintenance').innerText = 2;
 </script>
+
 </body>
 </html>
