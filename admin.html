@@ -89,7 +89,7 @@ checkLogin();
 const user = getUserInfo();
 if (user) {
     document.getElementById('user-info').innerHTML = `
-        Angemeldet als <strong>${user.username}</strong> (${user.role})
+        Angemeldet als <strong>${user.username}</strong> (${formatRole(user.role)})
         <button onclick="logout()" style="margin-left: 10px;">Logout</button>
     `;
 }
@@ -103,8 +103,20 @@ function toggleMenu() {
     document.getElementById('main-nav').classList.toggle('show');
 }
 
+const apiUsers = 'https://tcs-manager-backend.onrender.com/api/users';
+const apiResetPassword = 'https://tcs-manager-backend.onrender.com/api/reset-password';
+
+function formatRole(role) {
+    const map = {
+        administrator: "Administrator",
+        basisdienst: "Basisdienst",
+        vorstand: "Vorstand"
+    };
+    return map[role] || role;
+}
+
 function loadUsers() {
-    fetch("https://tcs-manager-backend.onrender.com/api/users", {
+    fetch(apiUsers, {
         headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
     })
     .then(res => res.json())
@@ -118,11 +130,12 @@ function renderUsersTable(data) {
     cardsContainer.innerHTML = '';
 
     data.forEach(user => {
+        // Tabellenansicht
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${user.username}</td>
             <td>${user.email}</td>
-            <td>${user.role}</td>
+            <td>${formatRole(user.role)}</td>
             <td>${user.status}</td>
             <td>
                 <button onclick='editUser(${JSON.stringify(user)})'>Bearbeiten</button>
@@ -132,12 +145,13 @@ function renderUsersTable(data) {
         `;
         tbody.appendChild(tr);
 
+        // Kartenansicht
         const card = document.createElement('div');
         card.className = "user-card";
         card.innerHTML = `
             <h3>${user.username}</h3>
             <p>Email: ${user.email}</p>
-            <p>Rolle: ${user.role}</p>
+            <p>Rolle: ${formatRole(user.role)}</p>
             <p>Status: ${user.status}</p>
             <button onclick='editUser(${JSON.stringify(user)})'>Bearbeiten</button>
             <button onclick='resetPassword(${user.id})'>Passwort</button>
@@ -171,6 +185,59 @@ function closeUserModal() {
 
 function closePasswordModal() {
     document.getElementById('passwordModal').style.display = 'none';
+}
+
+document.getElementById('user-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const user = {
+        username: document.getElementById('u-username').value,
+        email: document.getElementById('u-email').value,
+        role: document.getElementById('u-role').value
+    };
+
+    const password = document.getElementById('u-password').value;
+    if (password) {
+        user.password = password;
+    }
+
+    const id = document.getElementById('u-id').value;
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `${apiUsers}/${id}` : apiUsers;
+
+    fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
+        body: JSON.stringify(user)
+    }).then(() => {
+        closeUserModal();
+        loadUsers();
+    });
+});
+
+function resetPassword(userId) {
+    const password = prompt("Neues Passwort eingeben:");
+    if (!password) return;
+
+    fetch(apiResetPassword, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
+        body: JSON.stringify({ id: userId, password })
+    }).then(() => {
+        alert("Passwort wurde zurückgesetzt");
+    });
+}
+
+function toggleUserStatus(userId, currentStatus) {
+    const newStatus = currentStatus === "Aktiv" ? "Gesperrt" : "Aktiv";
+
+    fetch(`${apiUsers}/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
+        body: JSON.stringify({ status: newStatus })
+    }).then(() => {
+        loadUsers();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', loadUsers);
