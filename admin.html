@@ -88,6 +88,19 @@
 checkLogin();
 
 const user = getUserInfo();
+
+if (!user || user.role !== "administrator") {
+    document.body.innerHTML = `
+        <div style="text-align:center; padding: 50px;">
+            <h1>Zugriff verweigert</h1>
+            <p>Du hast mit deiner aktuellen Benutzerrolle keinen Zugriff auf den Adminbereich.<br>
+            Nur Administratoren können diese Seite nutzen.</p>
+            <button onclick="window.location.href='index.html'">Zurück zur Startseite</button>
+        </div>
+    `;
+    throw new Error("Zugriff verweigert - keine Berechtigung");
+}
+
 if (user) {
     document.getElementById('user-info').innerHTML = `
         Angemeldet als <strong>${user.username}</strong> (${formatRole(user.role)})
