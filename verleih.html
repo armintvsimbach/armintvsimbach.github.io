@@ -63,7 +63,7 @@
                 </td></tr>
                 <tr><td>Equipment:</td><td><input type="text" id="r-equipment" required></td></tr>
                 <tr><td>Verleihdatum:</td><td><input type="date" id="r-date" required></td></tr>
-                <tr><td>Rückgabedatum:</td><td><input type="date" id="r-return"></td></tr>
+                <!--<tr><td>Rückgabedatum:</td><td><input type="date" id="r-return"></td></tr>-->
             </table>
             <br>
             <input type="hidden" id="r-id">
@@ -100,11 +100,23 @@ function closeRentalModal() {
 
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
+	const today = new Date().toISOString().substr(0, 10);
+	document.getElementById('r-date').value = today;
     document.getElementById('r-id').value = '';
     document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
     document.getElementById('rentalModal').style.display = 'flex';
 }
 
+function openAddRentalModal() {
+    document.getElementById('rental-form').reset();
+    document.getElementById('r-id').value = '';
+    document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
+
+    const today = new Date().toISOString().substr(0, 10);
+    document.getElementById('r-date').value = today;
+
+    document.getElementById('rentalModal').style.display = 'flex';
+}
 const rentalData = [];
 const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
 let members = [];
