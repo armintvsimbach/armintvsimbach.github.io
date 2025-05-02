@@ -40,7 +40,7 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Hier werden die Mitglieder dynamisch geladen -->
+            <!-- Hier werden die Mitglieder geladen -->
         </tbody>
     </table>
 </main>
@@ -49,6 +49,7 @@
 
 <script src="shared.js"></script>
 <script>
+// Benutzer prüfen + anzeigen
 checkLogin();
 
 const user = getUserInfo();
@@ -64,11 +65,42 @@ function logout() {
     window.location.href = "login.html";
 }
 
+// Burger Menü
 function toggleMenu() {
     document.getElementById('main-nav').classList.toggle('show');
 }
 
-// Mitglieder Filter (Beispiel)
+// Mitglieder laden
+function loadMembers() {
+    fetch("http://localhost:3000/api/members", {
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.querySelector('#members-table tbody');
+        tbody.innerHTML = '';
+
+        data.forEach(member => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${member.name}</td>
+                <td>${member.birthdate}</td>
+                <td>${member.email}</td>
+                <td>${member.active ? 'Aktiv' : 'Inaktiv'}</td>
+                <td>${member.ttu_valid ? 'Ja' : 'Nein'}</td>
+                <td>
+                    <button onclick="editMember(${member.id})">Bearbeiten</button>
+                    <button onclick="deleteMember(${member.id})">Löschen</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+// Mitglieder filtern
 function filterMembers() {
     const input = document.getElementById('search').value.toLowerCase();
     const rows = document.querySelectorAll('#members-table tbody tr');
@@ -78,6 +110,26 @@ function filterMembers() {
         row.style.display = text.includes(input) ? '' : 'none';
     });
 }
+
+// Mitglieder bearbeiten (Platzhalter → später erweitern)
+function editMember(id) {
+    alert("Bearbeiten von Mitglied ID " + id + " (funktion folgt)");
+}
+
+// Mitglied löschen
+function deleteMember(id) {
+    if (confirm("Möchtest du dieses Mitglied wirklich löschen?")) {
+        fetch(`http://localhost:3000/api/members/${id}`, {
+            method: 'DELETE',
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            }
+        }).then(() => loadMembers());
+    }
+}
+
+// Seite laden → Mitglieder laden
+document.addEventListener('DOMContentLoaded', loadMembers);
 </script>
 
 </body>
