@@ -56,14 +56,17 @@
         <h2 id="rental-modal-title">Neuen Verleih erfassen</h2>
         <form id="rental-form">
             <table style="width: 100%;">
-                <tr><td>Mitglied suchen:</td><td><input type="text" id="member-search" placeholder="Mitglied suchen..."></td></tr>
-                <tr><td>Mitglied auswählen:</td><td><select id="r-member" size="5" required></select></td></tr>
+                <tr><td>Mitglied:</td><td>
+                    <input type="text" id="r-member-search" placeholder="Mitglied suchen..." autocomplete="off" required>
+                    <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
+                    <input type="hidden" id="r-member-id">
+                </td></tr>
                 <tr><td>Equipment:</td><td><input type="text" id="r-equipment" required></td></tr>
                 <tr><td>Verleihdatum:</td><td><input type="date" id="r-date" required></td></tr>
                 <tr><td>Rückgabedatum:</td><td><input type="date" id="r-return"></td></tr>
             </table>
-            <input type="hidden" id="r-id">
             <br>
+            <input type="hidden" id="r-id">
             <button type="submit">Speichern</button>
             <button type="button" onclick="closeRentalModal()">Abbrechen</button>
         </form>
@@ -98,6 +101,7 @@ function closeRentalModal() {
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
     document.getElementById('r-id').value = '';
+    document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
     document.getElementById('rentalModal').style.display = 'flex';
 }
 
@@ -111,31 +115,45 @@ function loadActiveMembers() {
     })
     .then(res => res.json())
     .then(data => {
-        members = data.filter(m => m.status === "aktiv" && m.ttu_gueltigkeit && new Date(m.ttu_gueltigkeit) >= new Date());
-        populateMemberDropdown();
+        members = data.filter(m => 
+            m.status.toLowerCase() === "aktiv" &&
+            m.ttu_gueltigkeit &&
+            !isNaN(new Date(m.ttu_gueltigkeit)) &&
+            new Date(m.ttu_gueltigkeit) >= new Date()
+        );
     });
 }
 
-function populateMemberDropdown() {
-    const select = document.getElementById('r-member');
-    select.innerHTML = '';
+const memberSearchInput = document.getElementById('r-member-search');
+const memberSuggestions = document.getElementById('r-member-suggestions');
+const memberIdInput = document.getElementById('r-member-id');
 
-    members.forEach(member => {
-        const option = document.createElement('option');
-        option.value = member.id;
-        option.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0,10)})`;
-        select.appendChild(option);
-    });
-}
+memberSearchInput.addEventListener('input', () => {
+    const search = memberSearchInput.value.toLowerCase();
+    memberSuggestions.innerHTML = '';
 
-document.getElementById('member-search').addEventListener('input', function() {
-    const search = this.value.toLowerCase();
-    const options = document.querySelectorAll('#r-member option');
+    if (!search) return;
 
-    options.forEach(option => {
-        const text = option.textContent.toLowerCase();
-        option.style.display = text.includes(search) ? '' : 'none';
-    });
+    const results = members.filter(member => 
+        `${member.vorname} ${member.name}`.toLowerCase().includes(search)
+    ).slice(0, 3);
+
+    if (results.length === 1) {
+        memberSearchInput.value = `${results[0].vorname} ${results[0].name}`;
+        memberIdInput.value = results[0].id;
+        memberSuggestions.innerHTML = '';
+    } else {
+        results.forEach(member => {
+            const li = document.createElement('li');
+            li.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0,10)})`;
+            li.onclick = () => {
+                memberSearchInput.value = `${member.vorname} ${member.name}`;
+                memberIdInput.value = member.id;
+                memberSuggestions.innerHTML = '';
+            };
+            memberSuggestions.appendChild(li);
+        });
+    }
 });
 
 function renderRentalTable(data) {
@@ -177,7 +195,7 @@ document.getElementById('rental-form').addEventListener('submit', (e) => {
     e.preventDefault();
 
     const rental = {
-        memberId: document.getElementById('r-member').value,
+        memberId: document.getElementById('r-member-id').value,
         equipment: document.getElementById('r-equipment').value,
         date: document.getElementById('r-date').value,
         returnDate: document.getElementById('r-return').value,
@@ -191,10 +209,13 @@ document.getElementById('rental-form').addEventListener('submit', (e) => {
 
 function editRental(rental) {
     document.getElementById('r-id').value = rental.id || '';
-    document.getElementById('r-member').value = rental.memberId;
+    const member = members.find(m => m.id == rental.memberId);
+    document.getElementById('r-member-search').value = member ? `${member.vorname} ${member.name}` : rental.memberId;
+    document.getElementById('r-member-id').value = rental.memberId;
     document.getElementById('r-equipment').value = rental.equipment;
     document.getElementById('r-date').value = rental.date;
     document.getElementById('r-return').value = rental.returnDate;
+    document.getElementById('rental-modal-title').innerText = "Verleih bearbeiten";
     document.getElementById('rentalModal').style.display = 'flex';
 }
 
@@ -203,6 +224,30 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRentalTable(rentalData);
 });
 </script>
+
+<style>
+.autocomplete-suggestions {
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    z-index: 1000;
+    width: 85%;
+}
+
+.autocomplete-suggestions li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.autocomplete-suggestions li:hover {
+    background: #eee;
+}
+</style>
 
 </body>
 </html>

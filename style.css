@@ -326,3 +326,25 @@ input[type="text"], input[type="email"], input[type="date"], input[type="passwor
         max-width: 350px;
     }
 }
+
+.autocomplete-suggestions {
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    z-index: 1000;
+    width: 85%;
+}
+
+.autocomplete-suggestions li {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.autocomplete-suggestions li:hover {
+    background: #eee;
+}
