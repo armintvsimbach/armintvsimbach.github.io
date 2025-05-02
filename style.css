@@ -127,14 +127,14 @@ mark {
 }
 
 /* Input Styles */
-input[type="text"], input[type="email"], input[type="date"], select {
+input[type="text"], input[type="email"], input[type="date"], input[type="password"], select {
     padding: 6px;
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 100%;
 }
 
-/* Dashboard Styles (NEU für Kacheln + Mobil) */
+/* Dashboard Styles */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -166,7 +166,7 @@ input[type="text"], input[type="email"], input[type="date"], select {
 .card.ttu { background-color: #fff8e1; }
 .card.wartung { background-color: #ffe0b2; }
 
-/* Mitglieder-Karten für Mobil */
+/* Karten für Mitgliederverwaltung */
 .member-card {
     background-color: white;
     margin-bottom: 10px;
@@ -189,6 +189,52 @@ input[type="text"], input[type="email"], input[type="date"], select {
     display: none;
 }
 
+/* Karten für Equipmentverwaltung */
+.equipment-card {
+    background-color: white;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.05);
+}
+
+.equipment-card h3 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.equipment-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.equipment-cards {
+    display: none;
+}
+
+/* Karten für Admin Benutzerverwaltung */
+.user-card {
+    background-color: white;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.05);
+}
+
+.user-card h3 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.user-card p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.user-cards {
+    display: none;
+}
+
 /* Burger Menü */
 .burger {
     display: none;
@@ -200,7 +246,7 @@ input[type="text"], input[type="email"], input[type="date"], select {
     top: 20px;
 }
 
-/* Responsive Styles */
+/* Responsive Styles (für Mobilgeräte) */
 @media (max-width: 600px) {
     table, thead, tbody, th, td, tr {
         display: block;
@@ -236,11 +282,15 @@ input[type="text"], input[type="email"], input[type="date"], select {
         margin-bottom: 10px;
     }
 
-    .member-cards {
+    .member-cards,
+    .equipment-cards,
+    .user-cards {
         display: block;
     }
 
-    #members-table {
+    #members-table,
+    #equipment-table,
+    #user-table {
         display: none;
     }
 
@@ -263,36 +313,5 @@ input[type="text"], input[type="email"], input[type="date"], select {
     nav a {
         margin: 10px 0;
         font-size: 18px;
-    }
-	
-	.equipment-card {
-    background-color: white;
-    margin-bottom: 10px;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 0 8px rgba(0,0,0,0.05);
-}
-
-.equipment-card h3 {
-    margin-top: 0;
-    font-size: 18px;
-}
-
-.equipment-card p {
-    margin: 5px 0;
-    font-size: 14px;
-}
-
-.equipment-cards {
-    display: none;
-}
-
-@media (max-width: 600px) {
-    #equipment-table {
-        display: none;
-    }
-
-    .equipment-cards {
-        display: block;
     }
 }

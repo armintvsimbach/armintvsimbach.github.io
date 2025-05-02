@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCS Manager</title>
+    <title>Admin - Benutzerverwaltung</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
     <div class="header-container">
-        <img src="Logo.png" alt="Vereinslogo" class="logo">
+        <div class="burger" onclick="toggleMenu()">☰</div>
         <h1>Benutzerverwaltung - Adminbereich</h1>
     </div>
-	<div id="user-info" style="float:right; padding: 10px; color: white;"></div>
-    <nav>
+
+    <nav id="main-nav">
         <a href="index.html">Start</a>
         <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
         <a href="verleih.html">Verleih</a>
@@ -40,7 +40,11 @@
         </thead>
         <tbody></tbody>
     </table>
+
+    <div class="user-cards"></div>
 </main>
+
+<div id="user-info" style="text-align: center; padding: 10px;"></div>
 
 <!-- Benutzer Modal -->
 <div class="modal" id="userModal">
@@ -49,18 +53,16 @@
         <form id="user-form">
             <input type="hidden" id="u-id">
             <label>Benutzername:</label><input type="text" id="u-username" required><br>
-			<div id="password-row">
-				<label>Passwort:</label>
-				<input type="password" id="u-password"><br>
-			</div>
+            <div id="password-row">
+                <label>Passwort:</label><input type="password" id="u-password"><br>
+            </div>
             <label>Email:</label><input type="email" id="u-email" required><br>
             <label>Rolle:</label>
             <select id="u-role" required>
                 <option value="administrator">Administrator</option>
                 <option value="basisdienst">Basisdienst</option>
                 <option value="vorstand">Vorstand</option>
-            </select><br>
-			<br><br>
+            </select><br><br>
             <button type="submit">Speichern</button>
             <button type="button" onclick="closeUserModal()">Abbrechen</button>
         </form>
@@ -79,16 +81,15 @@
         </form>
     </div>
 </div>
-<script src="admin.js"></script>
+
 <script src="shared.js"></script>
 <script>
 checkLogin();
 
-// User anzeigen + Logout
 const user = getUserInfo();
 if (user) {
     document.getElementById('user-info').innerHTML = `
-        <strong>${user.username}</strong> (${user.role})
+        Angemeldet als <strong>${user.username}</strong> (${user.role})
         <button onclick="logout()" style="margin-left: 10px;">Logout</button>
     `;
 }
@@ -97,8 +98,83 @@ function logout() {
     localStorage.removeItem("token");
     window.location.href = "login.html";
 }
-</script>
 
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('show');
+}
+
+function loadUsers() {
+    fetch("https://tcs-manager-backend.onrender.com/api/users", {
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    })
+    .then(res => res.json())
+    .then(data => renderUsersTable(data));
+}
+
+function renderUsersTable(data) {
+    const tbody = document.querySelector('#user-table tbody');
+    const cardsContainer = document.querySelector('.user-cards');
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
+
+    data.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+            <td>${user.status}</td>
+            <td>
+                <button onclick='editUser(${JSON.stringify(user)})'>Bearbeiten</button>
+                <button onclick='resetPassword(${user.id})'>Passwort</button>
+                <button onclick='toggleUserStatus(${user.id}, "${user.status}")'>${user.status === "Aktiv" ? "Sperren" : "Aktivieren"}</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = "user-card";
+        card.innerHTML = `
+            <h3>${user.username}</h3>
+            <p>Email: ${user.email}</p>
+            <p>Rolle: ${user.role}</p>
+            <p>Status: ${user.status}</p>
+            <button onclick='editUser(${JSON.stringify(user)})'>Bearbeiten</button>
+            <button onclick='resetPassword(${user.id})'>Passwort</button>
+            <button onclick='toggleUserStatus(${user.id}, "${user.status}")'>${user.status === "Aktiv" ? "Sperren" : "Aktivieren"}</button>
+        `;
+        cardsContainer.appendChild(card);
+    });
+}
+
+function openAddUserModal() {
+    document.getElementById('modal-title').innerText = "Neuen Benutzer hinzufügen";
+    document.getElementById('user-form').reset();
+    document.getElementById('u-id').value = '';
+    document.getElementById('password-row').style.display = 'block';
+    document.getElementById('userModal').style.display = 'flex';
+}
+
+function editUser(user) {
+    document.getElementById('modal-title').innerText = "Benutzer bearbeiten";
+    document.getElementById('u-id').value = user.id;
+    document.getElementById('u-username').value = user.username;
+    document.getElementById('u-email').value = user.email;
+    document.getElementById('u-role').value = user.role;
+    document.getElementById('password-row').style.display = 'none';
+    document.getElementById('userModal').style.display = 'flex';
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
 
 </body>
 </html>
