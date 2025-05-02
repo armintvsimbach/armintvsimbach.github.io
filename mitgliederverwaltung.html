@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCS Manager</title>
+    <title>Mitgliederverwaltung - TCS Manager</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
     <div class="header-container">
-        <img src="logo.png" alt="Vereinslogo" class="logo">
-        <h1>Tauchclub Simbach am Inn</h1>
+        <div class="burger" onclick="toggleMenu()">☰</div>
+        <h1>Vereinsverwaltung Tauchclub Simbach am Inn</h1>
     </div>
-	<div id="user-info" style="float:right; padding: 10px; color: white;"></div>
-    <nav>
+
+    <nav id="main-nav">
         <a href="index.html">Start</a>
         <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
         <a href="verleih.html">Verleih</a>
@@ -24,201 +24,37 @@
 </header>
 
 <main>
-    <section id="mitglieder">
-        <h2>Mitgliederverwaltung</h2>
+    <h2>Mitgliederverwaltung</h2>
 
-        <div style="margin-bottom: 20px;">
-            <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
-            <input type="text" id="search-members" placeholder="Mitglieder suchen...">
-        </div>
+    <input type="text" id="search" placeholder="Mitglieder suchen..." onkeyup="filterMembers()">
 
-        <table id="members-table">
-            <thead>
-                <tr>
-                    <th>Vorname</th>
-                    <th>Name</th>
-                    <th>Straße</th>
-                    <th>Hausnummer</th>
-                    <th>PLZ</th>
-                    <th>Ort</th>
-                    <th>Telefon</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Aktion</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </section>
+    <table id="members-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Geburtsdatum</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>TTU gültig</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Hier werden die Mitglieder dynamisch geladen -->
+        </tbody>
+    </table>
 </main>
 
-<!-- Mitglied-Modal -->
-<div class="modal" id="memberModal">
-    <div class="modal-content">
-        <h2 id="modal-title">Neues Mitglied</h2>
-        <form id="member-form">
-            <table style="width: 100%;">
-                <tr><td>Vorname:</td><td><input type="text" id="m-vorname" required></td></tr>
-                <tr><td>Name:</td><td><input type="text" id="m-name" required></td></tr>
-                <tr><td>Straße:</td><td><input type="text" id="m-strasse"></td></tr>
-                <tr><td>Hausnummer:</td><td><input type="text" id="m-hausnummer"></td></tr>
-                <tr><td>PLZ:</td><td><input type="text" id="m-plz"></td></tr>
-                <tr><td>Ort:</td><td><input type="text" id="m-ort"></td></tr>
-                <tr><td>Land:</td><td><input type="text" id="m-land"></td></tr>
-                <tr><td>Telefon:</td><td><input type="text" id="m-telefon"></td></tr>
-                <tr><td>Mobil:</td><td><input type="text" id="m-mobil"></td></tr>
-                <tr><td>Email:</td><td><input type="email" id="m-email"></td></tr>
-                <tr><td>Status:</td><td><input type="text" id="m-status"></td></tr>
-                <tr><td>TTU Gültigkeit:</td><td><input type="date" id="m-ttu"></td></tr>
-            </table>
-            <input type="hidden" id="m-id">
-            <button type="submit">Speichern</button>
-            <button type="button" onclick="closeMemberModal()">Abbrechen</button>
-        </form>
-    </div>
-</div>
+<div id="user-info" style="text-align: center; padding: 10px;"></div>
+
 <script src="shared.js"></script>
 <script>
-let membersData = [];
-
-function fetchMembers() {
-    fetch("https://tcs-manager-backend.onrender.com/api/members")
-        .then(res => res.json())
-        .then(data => {
-            membersData = data;
-            renderMembersTable(membersData);
-        });
-}
-
-function renderMembersTable(data, highlight = '') {
-    const tbody = document.querySelector('#members-table tbody');
-    tbody.innerHTML = '';
-
-    data.forEach(member => {
-        const tr = document.createElement('tr');
-
-        const highlightText = (text) => {
-            if (!highlight) return text;
-            const regex = new RegExp(`(${highlight})`, 'gi');
-            return (text + '').replace(regex, '<mark>$1</mark>');
-        };
-
-        tr.innerHTML = `
-            <td>${highlightText(member.vorname)}</td>
-            <td>${highlightText(member.name)}</td>
-            <td>${highlightText(member.strasse)}</td>
-            <td>${highlightText(member.hausnummer)}</td>
-            <td>${highlightText(member.plz)}</td>
-            <td>${highlightText(member.ort)}</td>
-            <td>${highlightText(member.telefon)}</td>
-            <td>${highlightText(member.email)}</td>
-            <td>${highlightText(member.status)}</td>
-            <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-function applyMemberSearch() {
-    const query = document.getElementById('search-members').value.toLowerCase();
-
-    const filtered = membersData.filter(member => {
-        return Object.values(member).some(val => 
-            (val + '').toLowerCase().includes(query)
-        );
-    });
-
-    renderMembersTable(filtered, query);
-}
-
-const searchInput = document.getElementById('search-members');
-searchInput.addEventListener('input', applyMemberSearch);
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        searchInput.value = '';
-        renderMembersTable(membersData);
-    }
-});
-
-function openAddMemberModal() {
-    document.getElementById('modal-title').innerText = "Neues Mitglied";
-    document.getElementById('member-form').reset();
-    document.getElementById('m-id').value = '';
-    document.getElementById('memberModal').style.display = 'flex';
-}
-
-function openEditMemberModal(member) {
-    openAddMemberModal();
-    document.getElementById('modal-title').innerText = "Mitglied bearbeiten";
-    document.getElementById('m-id').value = member.id;
-    document.getElementById('m-vorname').value = member.vorname;
-    document.getElementById('m-name').value = member.name;
-    document.getElementById('m-strasse').value = member.strasse;
-    document.getElementById('m-hausnummer').value = member.hausnummer;
-    document.getElementById('m-plz').value = member.plz;
-    document.getElementById('m-ort').value = member.ort;
-    document.getElementById('m-land').value = member.land;
-    document.getElementById('m-telefon').value = member.telefon;
-    document.getElementById('m-mobil').value = member.mobil;
-    document.getElementById('m-email').value = member.email;
-    document.getElementById('m-status').value = member.status;
-    document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0,10) : '';
-}
-
-function closeMemberModal() {
-    document.getElementById('memberModal').style.display = 'none';
-}
-
-document.getElementById('member-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const member = {
-        vorname: document.getElementById('m-vorname').value,
-        name: document.getElementById('m-name').value,
-        strasse: document.getElementById('m-strasse').value,
-        hausnummer: document.getElementById('m-hausnummer').value,
-        plz: document.getElementById('m-plz').value,
-        ort: document.getElementById('m-ort').value,
-        land: document.getElementById('m-land').value,
-        telefon: document.getElementById('m-telefon').value,
-        mobil: document.getElementById('m-mobil').value,
-        email: document.getElementById('m-email').value,
-        status: document.getElementById('m-status').value,
-        ttu_gueltigkeit: document.getElementById('m-ttu').value
-    };
-
-    const id = document.getElementById('m-id').value;
-
-    if (id) {
-        fetch(`https://tcs-manager-backend.onrender.com/api/members/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(member)
-        }).then(() => {
-            closeMemberModal();
-            fetchMembers();
-        });
-    } else {
-        fetch("https://tcs-manager-backend.onrender.com/api/members", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(member)
-        }).then(() => {
-            closeMemberModal();
-            fetchMembers();
-        });
-    }
-});
-
-document.addEventListener('DOMContentLoaded', fetchMembers);
-
 checkLogin();
 
-// User anzeigen + Logout
 const user = getUserInfo();
 if (user) {
     document.getElementById('user-info').innerHTML = `
-        <strong>${user.username}</strong> (${user.role})
+        Angemeldet als <strong>${user.username}</strong> (${user.role}) 
         <button onclick="logout()" style="margin-left: 10px;">Logout</button>
     `;
 }
@@ -228,6 +64,20 @@ function logout() {
     window.location.href = "login.html";
 }
 
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('show');
+}
+
+// Mitglieder Filter (Beispiel)
+function filterMembers() {
+    const input = document.getElementById('search').value.toLowerCase();
+    const rows = document.querySelectorAll('#members-table tbody tr');
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? '' : 'none';
+    });
+}
 </script>
 
 </body>
