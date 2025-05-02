@@ -12,6 +12,7 @@ header {
     color: white;
     padding: 20px;
     text-align: center;
+    position: relative;
 }
 
 .header-container {
@@ -133,7 +134,7 @@ input[type="text"], input[type="email"], input[type="date"], select {
     width: 100%;
 }
 
-/* Dashboard Styles (Kacheln für Übersicht) */
+/* Dashboard Styles (NEU für Kacheln + Mobil) */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -165,7 +166,7 @@ input[type="text"], input[type="email"], input[type="date"], select {
 .card.ttu { background-color: #fff8e1; }
 .card.wartung { background-color: #ffe0b2; }
 
-/* Kachel-Ansicht für Mitglieder auf Mobil */
+/* Mitglieder-Karten für Mobil */
 .member-card {
     background-color: white;
     margin-bottom: 10px;
@@ -188,7 +189,18 @@ input[type="text"], input[type="email"], input[type="date"], select {
     display: none;
 }
 
-/* Responsive (Mobile first optimiert für iPhone / Android) */
+/* Burger Menü */
+.burger {
+    display: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+    position: absolute;
+    left: 20px;
+    top: 20px;
+}
+
+/* Responsive Styles */
 @media (max-width: 600px) {
     table, thead, tbody, th, td, tr {
         display: block;
@@ -230,5 +242,26 @@ input[type="text"], input[type="email"], input[type="date"], select {
 
     #members-table {
         display: none;
+    }
+
+    .burger {
+        display: block;
+    }
+
+    nav {
+        display: none;
+        flex-direction: column;
+        background-color: #005a99;
+        text-align: left;
+        padding-left: 20px;
+    }
+
+    nav.show {
+        display: flex;
+    }
+
+    nav a {
+        margin: 10px 0;
+        font-size: 18px;
     }
 }
