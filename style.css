@@ -12,6 +12,7 @@ header {
     color: white;
     padding: 20px;
     text-align: center;
+    position: relative;
 }
 
 .header-container {
@@ -19,6 +20,7 @@ header {
     align-items: center;
     justify-content: center;
     gap: 20px;
+    position: relative;
 }
 
 .logo {
@@ -133,7 +135,7 @@ input[type="text"], input[type="email"], input[type="date"], select {
     width: 100%;
 }
 
-/* Dashboard Styles (NEU für Kacheln + Mobil) */
+/* Dashboard Styles */
 .dashboard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -165,8 +167,59 @@ input[type="text"], input[type="email"], input[type="date"], select {
 .card.ttu { background-color: #fff8e1; }
 .card.wartung { background-color: #ffe0b2; }
 
-/* Responsive (Mobile first optimiert für iPhone / Android) */
+/* Burger Menu Styles */
+.burger {
+    display: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+    position: absolute;
+    left: 20px;
+    top: 25px;
+}
+
 @media (max-width: 600px) {
+    .header-container {
+        justify-content: center;
+    }
+
+    .header-container h1 {
+        font-size: 18px; /* kleiner für iOS Ansicht */
+    }
+
+    .burger {
+        display: block;
+        left: 10px;
+        top: 18px;
+    }
+
+    nav {
+        display: none;
+        flex-direction: column;
+        background-color: #005a99;
+        text-align: left;
+        padding-left: 20px;
+    }
+
+    nav.show {
+        display: flex;
+    }
+
+    nav a {
+        margin: 10px 0;
+        font-size: 18px;
+    }
+
+    /* Dashboard mobil einspaltig */
+    .dashboard {
+        display: block;
+    }
+
+    .card {
+        margin-bottom: 10px;
+    }
+
+    /* Tabellen mobil */
     table, thead, tbody, th, td, tr {
         display: block;
         width: 100%;
@@ -191,56 +244,5 @@ input[type="text"], input[type="email"], input[type="date"], select {
 
     .modal-content {
         width: 95%;
-    }
-
-    .dashboard {
-        display: block;
-    }
-
-    .card {
-        margin-bottom: 10px;
-    }
-.burger {
-    display: none;
-    font-size: 28px;
-    cursor: pointer;
-    color: white;
-    position: absolute;
-    right: 20px;
-    top: 25px;
-}
-
-nav {
-    background-color: #005a99;
-    padding: 10px;
-    text-align: center;
-}
-
-nav a {
-    color: white;
-    text-decoration: none;
-    margin: 0 15px;
-    font-weight: bold;
-    display: inline-block;
-}
-
-@media (max-width: 600px) {
-    .burger {
-        display: block;
-    }
-
-    nav {
-        display: none;
-        flex-direction: column;
-        background-color: #005a99;
-    }
-
-    nav.show {
-        display: flex;
-    }
-
-    nav a {
-        margin: 10px 0;
-        font-size: 18px;
     }
 }
