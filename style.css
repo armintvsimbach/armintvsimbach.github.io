@@ -133,6 +133,38 @@ input[type="text"], input[type="email"], input[type="date"], select {
     width: 100%;
 }
 
+/* Dashboard Styles (NEU für Kacheln + Mobil) */
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.card {
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.card h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #666;
+}
+
+.card p {
+    font-size: 28px;
+    margin: 0;
+}
+
+.card.active { background-color: #e0f7fa; }
+.card.inactive { background-color: #ffebee; }
+.card.ttu { background-color: #fff8e1; }
+.card.wartung { background-color: #ffe0b2; }
+
 /* Responsive (Mobile first optimiert für iPhone / Android) */
 @media (max-width: 600px) {
     table, thead, tbody, th, td, tr {
@@ -159,5 +191,13 @@ input[type="text"], input[type="email"], input[type="date"], select {
 
     .modal-content {
         width: 95%;
+    }
+
+    .dashboard {
+        display: block;
+    }
+
+    .card {
+        margin-bottom: 10px;
     }
 }

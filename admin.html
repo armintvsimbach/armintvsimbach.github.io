@@ -1,1 +1,104 @@
-<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benutzerverwaltung - TCS Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <img src="Logo.png" alt="Vereinslogo" class="logo">
+        <h1>Benutzerverwaltung - Adminbereich</h1>
+    </div>
+	<div id="user-info" style="float:right; padding: 10px; color: white;"></div>
+    <nav>
+        <a href="index.html">Start</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <h2>Benutzerliste</h2>
+
+    <button onclick="openAddUserModal()">➕ Neuen Benutzer hinzufügen</button>
+
+    <table id="user-table">
+        <thead>
+            <tr>
+                <th>Benutzername</th>
+                <th>Email</th>
+                <th>Rolle</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</main>
+
+<!-- Benutzer Modal -->
+<div class="modal" id="userModal">
+    <div class="modal-content">
+        <h2 id="modal-title">Benutzer bearbeiten</h2>
+        <form id="user-form">
+            <input type="hidden" id="u-id">
+            <label>Benutzername:</label><input type="text" id="u-username" required><br>
+			<div id="password-row">
+				<label>Passwort:</label>
+				<input type="password" id="u-password"><br>
+			</div>
+            <label>Email:</label><input type="email" id="u-email" required><br>
+            <label>Rolle:</label>
+            <select id="u-role" required>
+                <option value="administrator">Administrator</option>
+                <option value="basisdienst">Basisdienst</option>
+                <option value="vorstand">Vorstand</option>
+            </select><br>
+			<br><br>
+            <button type="submit">Speichern</button>
+            <button type="button" onclick="closeUserModal()">Abbrechen</button>
+        </form>
+    </div>
+</div>
+
+<!-- Passwort Reset Modal -->
+<div class="modal" id="passwordModal">
+    <div class="modal-content">
+        <h2>Passwort zurücksetzen</h2>
+        <form id="password-form">
+            <input type="hidden" id="p-id">
+            <label>Neues Passwort:</label><input type="password" id="p-password" required><br><br>
+            <button type="submit">Zurücksetzen</button>
+            <button type="button" onclick="closePasswordModal()">Abbrechen</button>
+        </form>
+    </div>
+</div>
+<script src="admin.js"></script>
+<script src="shared.js"></script>
+<script>
+checkLogin();
+
+// User anzeigen + Logout
+const user = getUserInfo();
+if (user) {
+    document.getElementById('user-info').innerHTML = `
+        <strong>${user.username}</strong> (${user.role})
+        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
+    `;
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
+}
+</script>
+
+
+</body>
+</html>

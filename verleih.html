@@ -10,14 +10,35 @@
 
 <header>
   <div class="header-container">
-    <img src="logo-placeholder.png" alt="Vereinslogo" class="logo">
+    <img src="logo.png" alt="Vereinslogo" class="logo">
     <h1>Vereinsverwaltung Tauchclub Simbach am Inn</h1>
   </div>
-  <nav>
-    <a href="index.html">Start</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="verleih.html">Verleih</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-  </nav>
+  <div id="user-info" style="float:right; padding: 10px; color: white;"></div>
+    <nav>
+        <a href="index.html">Start</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 
 </header>
+
+<script src="shared.js"></script>
+<script>
+checkLogin();
+
+// User anzeigen + Logout
+const user = getUserInfo();
+if (user) {
+    document.getElementById('user-info').innerHTML = `
+        <strong>${user.username}</strong> (${user.role})
+        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
+    `;
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
+}
+</script>
