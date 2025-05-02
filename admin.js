@@ -1,5 +1,5 @@
-const apiUsers = 'http://localhost:3000/api/users';
-const apiResetPassword = 'http://localhost:3000/api/reset-password';
+const apiUsers = 'https://tcs-manager-backend.onrender.com/api/users';
+const apiResetPassword = 'https://tcs-manager-backend.onrender.com/api/reset-password';
 
 let users = [];
 

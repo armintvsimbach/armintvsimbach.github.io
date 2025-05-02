@@ -82,7 +82,7 @@
 let membersData = [];
 
 function fetchMembers() {
-    fetch("http://localhost:3000/api/members")
+    fetch("https://tcs-manager-backend.onrender.com/api/members")
         .then(res => res.json())
         .then(data => {
             membersData = data;
@@ -190,7 +190,7 @@ document.getElementById('member-form').addEventListener('submit', (e) => {
     const id = document.getElementById('m-id').value;
 
     if (id) {
-        fetch(`http://localhost:3000/api/members/${id}`, {
+        fetch(`https://tcs-manager-backend.onrender.com/api/members/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(member)
@@ -199,7 +199,7 @@ document.getElementById('member-form').addEventListener('submit', (e) => {
             fetchMembers();
         });
     } else {
-        fetch("http://localhost:3000/api/members", {
+        fetch("https://tcs-manager-backend.onrender.com/api/members", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(member)
