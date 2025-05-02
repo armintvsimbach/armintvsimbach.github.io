@@ -71,11 +71,40 @@ function toggleMenu() {
     document.getElementById('main-nav').classList.toggle('show');
 }
 
-// Dashboard Beispielzahlen (kann später per API geladen werden)
-document.getElementById('active-members').innerText = 24;
-document.getElementById('inactive-members').innerText = 4;
-document.getElementById('invalid-ttu').innerText = 3;
-document.getElementById('overdue-maintenance').innerText = 2;
+const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
+const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
+
+function loadDashboard() {
+    Promise.all([
+        fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(res => res.json()),
+        fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(res => res.json())
+    ]).then(([members, equipment]) => {
+
+        // Mitglieder zählen
+        const activeMembers = members.filter(m => m.status === "aktiv").length;
+        const inactiveMembers = members.filter(m => m.status !== "aktiv").length;
+        const invalidTTU = members.filter(m => !m.ttu_gueltigkeit || new Date(m.ttu_gueltigkeit) < new Date()).length;
+
+        // Equipment Wartungen zählen
+        const overdueMaintenance = equipment.filter(eq => {
+            if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
+
+            const last = new Date(eq.letzte_wartung);
+            last.setMonth(last.getMonth() + parseInt(eq.wartungsintervall));
+            return last < new Date();
+        }).length;
+
+        // Werte setzen
+        document.getElementById('active-members').innerText = activeMembers;
+        document.getElementById('inactive-members').innerText = inactiveMembers;
+        document.getElementById('invalid-ttu').innerText = invalidTTU;
+        document.getElementById('overdue-maintenance').innerText = overdueMaintenance;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+
+
 </script>
 
 </body>
