@@ -72,7 +72,7 @@ function toggleMenu() {
 
 // Mitglieder laden
 function loadMembers() {
-    fetch("http://localhost:3000/api/members", {
+    fetch("https://tcs-manager-backend.onrender.com/api/members", {
         headers: {
             "Authorization": "Bearer " + localStorage.getItem("token")
         }
@@ -119,7 +119,7 @@ function editMember(id) {
 // Mitglied löschen
 function deleteMember(id) {
     if (confirm("Möchtest du dieses Mitglied wirklich löschen?")) {
-        fetch(`http://localhost:3000/api/members/${id}`, {
+        fetch(`https://tcs-manager-backend.onrender.com/api/members/${id}`, {
             method: 'DELETE',
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("token")
