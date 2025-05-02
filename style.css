@@ -200,4 +200,47 @@ input[type="text"], input[type="email"], input[type="date"], select {
     .card {
         margin-bottom: 10px;
     }
+.burger {
+    display: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+    position: absolute;
+    right: 20px;
+    top: 25px;
+}
+
+nav {
+    background-color: #005a99;
+    padding: 10px;
+    text-align: center;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+@media (max-width: 600px) {
+    .burger {
+        display: block;
+    }
+
+    nav {
+        display: none;
+        flex-direction: column;
+        background-color: #005a99;
+    }
+
+    nav.show {
+        display: flex;
+    }
+
+    nav a {
+        margin: 10px 0;
+        font-size: 18px;
+    }
 }
