@@ -10,8 +10,8 @@
 
 <header>
     <div class="header-container">
+	
         <div class="burger" onclick="toggleMenu()">☰</div>
-        <h1>TC Simbach</h1>
     </div>
 
     <nav id="main-nav">
@@ -41,6 +41,7 @@
                 <th>PLZ</th>
                 <th>Ort</th>
                 <th>Telefon</th>
+				<th>Mobil</th>
                 <th>Email</th>
                 <th>Status</th>
                 <th>Aktion</th>
@@ -139,6 +140,7 @@ function renderMembersTable(data, highlight = '') {
             <td>${highlightText(member.plz)}</td>
             <td>${highlightText(member.ort)}</td>
             <td>${highlightText(member.telefon)}</td>
+			<td>${highlightText(member.mobil)}</td> <!-- NEU -->
             <td>${highlightText(member.email)}</td>
             <td>${highlightText(member.status)}</td>
             <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
@@ -152,6 +154,7 @@ function renderMembersTable(data, highlight = '') {
             <h3>${highlightText(member.vorname)} ${highlightText(member.name)}</h3>
             <p>📍 ${highlightText(member.strasse)} ${highlightText(member.hausnummer)}, ${highlightText(member.plz)} ${highlightText(member.ort)}</p>
             <p>📞 ${highlightText(member.telefon)}</p>
+			<p>📞 ${member.mobil}</p> <!-- NEU -->
             <p>✉️ ${highlightText(member.email)}</p>
             <p>Status: ${highlightText(member.status)}</p>
             <button onclick='openEditMemberModal(${JSON.stringify(member)})'>Bearbeiten</button>
