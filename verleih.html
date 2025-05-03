@@ -55,17 +55,30 @@
         <h2 id="rental-modal-title">Neuen Verleih erfassen</h2>
         <form id="rental-form">
             <table style="width: 100%;">
-                <tr><td>Mitglied:</td><td>
-                    <input type="text" id="r-member-search" placeholder="Mitglied suchen..." autocomplete="off" required>
-                    <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
-                    <input type="hidden" id="r-member-id">
-                </td></tr>
-                <tr><td>Equipment:</td><td>
-                    <input type="text" id="r-equipment-search" placeholder="Equipment suchen..." autocomplete="off" required>
-                    <ul id="r-equipment-suggestions" class="autocomplete-suggestions"></ul>
-                    <input type="hidden" id="r-equipment-id">
-                </td></tr>
-                <tr><td>Verleihdatum:</td><td><input type="date" id="r-date" required></td></tr>
+                <tr>
+                    <td>Mitglied:</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <input type="text" id="r-member-search" placeholder="Mitglied suchen..." autocomplete="off" required>
+                            <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
+                            <input type="hidden" id="r-member-id">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Equipment:</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <input type="text" id="r-equipment-search" placeholder="Equipment suchen..." autocomplete="off" required>
+                            <ul id="r-equipment-suggestions" class="autocomplete-suggestions"></ul>
+                            <input type="hidden" id="r-equipment-id">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Verleihdatum:</td>
+                    <td><input type="date" id="r-date" required></td>
+                </tr>
             </table>
             <br>
             <button type="submit">Speichern</button>
@@ -102,10 +115,30 @@ function closeRentalModal() {
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
     document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
+
     const today = new Date().toISOString().substr(0, 10);
     document.getElementById('r-date').value = today;
     document.getElementById('rentalModal').style.display = 'flex';
+
+    // Mitglied Feld zurücksetzen + Clear Button entfernen
+    const memberInput = document.getElementById('r-member-search');
+    const memberHidden = document.getElementById('r-member-id');
+    memberInput.disabled = false;
+    memberInput.value = '';
+    memberHidden.value = '';
+    const existingMemberClear = memberInput.parentNode.querySelector('.clear-button');
+    if (existingMemberClear) existingMemberClear.remove();
+
+    // Equipment Feld zurücksetzen + Clear Button entfernen
+    const equipmentInput = document.getElementById('r-equipment-search');
+    const equipmentHidden = document.getElementById('r-equipment-id');
+    equipmentInput.disabled = false;
+    equipmentInput.value = '';
+    equipmentHidden.value = '';
+    const existingEquipmentClear = equipmentInput.parentNode.querySelector('.clear-button');
+    if (existingEquipmentClear) existingEquipmentClear.remove();
 }
+
 
 const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
 const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
@@ -167,7 +200,7 @@ async function renderRentalTable() {
             <td>${formatDate(rental.rental_date)}</td>
             <td>${formatDate(rental.return_date)}</td>
             <td>${rental.status}</td>
-            <td><button onclick='confirmReturn(${JSON.stringify(rental)})'><span style="font-size:18px;">🚪</span></button></td>
+            <td><button onclick='confirmReturn(${JSON.stringify(rental)})'>🚪</button></td>
         `;
         tbody.appendChild(tr);
 
@@ -178,7 +211,7 @@ async function renderRentalTable() {
             <p><strong>Equipment:</strong> ${equipmentName}</p>
             <p><strong>Verleihdatum:</strong> ${formatDate(rental.rental_date)}</p>
             <p><strong>Status:</strong> ${rental.status}</p>
-            <button onclick='confirmReturn(${JSON.stringify(rental)})'><span style="font-size:18px;">🚪</span></button>
+            <button onclick='confirmReturn(${JSON.stringify(rental)})'>🚪</button>
         `;
         cardsContainer.appendChild(card);
     });
@@ -194,6 +227,99 @@ async function confirmReturn(rental) {
         renderRentalTable();
     }
 }
+
+function setClearButton(inputElement, hiddenInput) {
+    const wrapper = inputElement.parentNode;
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'clear-button';
+    clearBtn.innerHTML = '✕';
+    wrapper.appendChild(clearBtn);
+
+    clearBtn.onclick = () => {
+        inputElement.disabled = false;
+        inputElement.value = '';
+        hiddenInput.value = '';
+        clearBtn.remove();
+    };
+}
+
+const memberSearchInput = document.getElementById('r-member-search');
+const memberSuggestions = document.getElementById('r-member-suggestions');
+const memberIdInput = document.getElementById('r-member-id');
+
+memberSearchInput.addEventListener('input', () => {
+    const search = memberSearchInput.value.toLowerCase();
+    memberSuggestions.innerHTML = '';
+    if (!search) {
+        memberSearchInput.disabled = false;
+        return;
+    }
+
+    const results = members.filter(member => (`${member.vorname} ${member.name}`).toLowerCase().includes(search)).slice(0, 3);
+
+    if (results.length === 1) {
+        const member = results[0];
+        memberSearchInput.value = `${member.vorname} ${member.name}`;
+        memberIdInput.value = member.id;
+        memberSearchInput.disabled = true;
+        setClearButton(memberSearchInput, memberIdInput);
+    } else {
+        results.forEach(member => {
+            const li = document.createElement('li');
+            li.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0, 10)})`;
+            li.onclick = () => {
+                memberSearchInput.value = `${member.vorname} ${member.name}`;
+                memberIdInput.value = member.id;
+                memberSuggestions.innerHTML = '';
+                memberSearchInput.disabled = true;
+                setClearButton(memberSearchInput, memberIdInput);
+            };
+            memberSuggestions.appendChild(li);
+        });
+    }
+});
+
+const equipmentSearchInput = document.getElementById('r-equipment-search');
+const equipmentSuggestions = document.getElementById('r-equipment-suggestions');
+const equipmentIdInput = document.getElementById('r-equipment-id');
+
+equipmentSearchInput.addEventListener('input', () => {
+    const search = equipmentSearchInput.value.toLowerCase();
+    equipmentSuggestions.innerHTML = '';
+    if (!search) {
+        equipmentSearchInput.disabled = false;
+        return;
+    }
+
+    const results = equipmentList.filter(eq =>
+        (eq.name && eq.name.toLowerCase().includes(search)) ||
+        (eq.kategorie && eq.kategorie.toLowerCase().includes(search)) ||
+        (eq.beschreibung && eq.beschreibung.toLowerCase().includes(search)) ||
+        (eq.groesse && eq.groesse.toLowerCase().includes(search))
+    ).slice(0, 3);
+
+    if (results.length === 1) {
+        const eq = results[0];
+        equipmentSearchInput.value = eq.name;
+        equipmentIdInput.value = eq.id;
+        equipmentSearchInput.disabled = true;
+        setClearButton(equipmentSearchInput, equipmentIdInput);
+    } else {
+        results.forEach(eq => {
+            const li = document.createElement('li');
+            li.textContent = `${eq.name} (${eq.kategorie}, ${eq.beschreibung}, ${eq.groesse})`;
+            li.onclick = () => {
+                equipmentSearchInput.value = eq.name;
+                equipmentIdInput.value = eq.id;
+                equipmentSuggestions.innerHTML = '';
+                equipmentSearchInput.disabled = true;
+                setClearButton(equipmentSearchInput, equipmentIdInput);
+            };
+            equipmentSuggestions.appendChild(li);
+        });
+    }
+});
 
 document.getElementById('rental-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -215,66 +341,6 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
     renderRentalTable();
 });
 
-const memberSearchInput = document.getElementById('r-member-search');
-const memberSuggestions = document.getElementById('r-member-suggestions');
-const memberIdInput = document.getElementById('r-member-id');
-
-memberSearchInput.addEventListener('input', () => {
-    const search = memberSearchInput.value.toLowerCase();
-    memberSuggestions.innerHTML = '';
-    if (!search) return;
-
-    const results = members.filter(member => (`${member.vorname} ${member.name}`).toLowerCase().includes(search)).slice(0, 3);
-    if (results.length === 1) {
-        memberSearchInput.value = `${results[0].vorname} ${results[0].name}`;
-        memberIdInput.value = results[0].id;
-    } else {
-        results.forEach(member => {
-            const li = document.createElement('li');
-            li.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0, 10)})`;
-            li.onclick = () => {
-                memberSearchInput.value = `${member.vorname} ${member.name}`;
-                memberIdInput.value = member.id;
-                memberSuggestions.innerHTML = '';
-            };
-            memberSuggestions.appendChild(li);
-        });
-    }
-});
-
-const equipmentSearchInput = document.getElementById('r-equipment-search');
-const equipmentSuggestions = document.getElementById('r-equipment-suggestions');
-const equipmentIdInput = document.getElementById('r-equipment-id');
-
-equipmentSearchInput.addEventListener('input', () => {
-    const search = equipmentSearchInput.value.toLowerCase();
-    equipmentSuggestions.innerHTML = '';
-    if (!search) return;
-
-    const results = equipmentList.filter(eq =>
-        (eq.name && eq.name.toLowerCase().includes(search)) ||
-        (eq.kategorie && eq.kategorie.toLowerCase().includes(search)) ||
-        (eq.beschreibung && eq.beschreibung.toLowerCase().includes(search)) ||
-        (eq.groesse && eq.groesse.toLowerCase().includes(search))
-    ).slice(0, 3);
-
-    if (results.length === 1) {
-        equipmentSearchInput.value = results[0].name;
-        equipmentIdInput.value = results[0].id;
-    } else {
-        results.forEach(eq => {
-            const li = document.createElement('li');
-            li.textContent = `${eq.name} (${eq.kategorie}, ${eq.beschreibung}, ${eq.groesse})`;
-            li.onclick = () => {
-                equipmentSearchInput.value = eq.name;
-                equipmentIdInput.value = eq.id;
-                equipmentSuggestions.innerHTML = '';
-            };
-            equipmentSuggestions.appendChild(li);
-        });
-    }
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     Promise.all([
         loadActiveMembers(),
@@ -285,48 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-
-<style>
-.autocomplete-suggestions {
-    border: 1px solid #ccc;
-    max-height: 150px;
-    overflow-y: auto;
-    background: white;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    position: absolute;
-    z-index: 1000;
-    width: 85%;
-}
-
-.autocomplete-suggestions li {
-    padding: 8px;
-    cursor: pointer;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.autocomplete-suggestions li:hover {
-    background: #eee;
-}
-
-@media (max-width: 600px) {
-    #rental-table {
-        display: none;
-    }
-    .rental-cards {
-        display: block;
-    }
-}
-
-@media (min-width: 601px) {
-    .rental-cards {
-        display: none;
-    }
-}
-</style>
 
 </body>
 </html>
