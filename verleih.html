@@ -123,12 +123,16 @@ function loadActiveMembers() {
 }
 
 function loadAvailableEquipment() {
-    return fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
-        .then(res => res.json())
-        .then(data => {
-            equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verleihdatum);
-        });
+    fetch(apiEquipment, {
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    })
+    .then(res => res.json())
+    .then(data => {
+        // Nur Equipment laden, das aktiv und NICHT verliehen ist
+        equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verliehen);
+    });
 }
+
 
 function formatDate(dateString) {
     if (!dateString) return '-';
