@@ -115,7 +115,7 @@ let members = [];
 let equipmentList = [];
 
 function loadActiveMembers() {
-    fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+    return fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
         .then(res => res.json())
         .then(data => {
             members = data.filter(m => m.status.toLowerCase() === "aktiv" && m.ttu_gueltigkeit && new Date(m.ttu_gueltigkeit) >= new Date());
@@ -123,11 +123,17 @@ function loadActiveMembers() {
 }
 
 function loadAvailableEquipment() {
-    fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+    return fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
         .then(res => res.json())
         .then(data => {
             equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verleihdatum);
         });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
 }
 
 async function renderRentalTable() {
@@ -149,8 +155,8 @@ async function renderRentalTable() {
         tr.innerHTML = `
             <td>${memberName}</td>
             <td>${equipmentName}</td>
-            <td>${rental.rental_date}</td>
-            <td>${rental.return_date || '-'}</td>
+            <td>${formatDate(rental.rental_date)}</td>
+            <td>${formatDate(rental.return_date)}</td>
             <td>${rental.status}</td>
             <td><button onclick='confirmReturn(${JSON.stringify(rental)})'><span style="font-size:18px;">🚪</span></button></td>
         `;
@@ -161,7 +167,7 @@ async function renderRentalTable() {
         card.innerHTML = `
             <h3>${memberName}</h3>
             <p><strong>Equipment:</strong> ${equipmentName}</p>
-            <p><strong>Verleihdatum:</strong> ${rental.rental_date}</p>
+            <p><strong>Verleihdatum:</strong> ${formatDate(rental.rental_date)}</p>
             <p><strong>Status:</strong> ${rental.status}</p>
             <button onclick='confirmReturn(${JSON.stringify(rental)})'><span style="font-size:18px;">🚪</span></button>
         `;
@@ -265,10 +271,14 @@ equipmentSearchInput.addEventListener('input', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadActiveMembers();
-    loadAvailableEquipment();
-    renderRentalTable();
+    Promise.all([
+        loadActiveMembers(),
+        loadAvailableEquipment()
+    ]).then(() => {
+        renderRentalTable();
+    });
 });
+
 </script>
 
 <style>
