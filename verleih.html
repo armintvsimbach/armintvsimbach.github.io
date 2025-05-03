@@ -68,7 +68,6 @@
                 <tr><td>Verleihdatum:</td><td><input type="date" id="r-date" required></td></tr>
             </table>
             <br>
-            <input type="hidden" id="r-id">
             <button type="submit">Speichern</button>
             <button type="button" onclick="closeRentalModal()">Abbrechen</button>
         </form>
@@ -102,46 +101,107 @@ function closeRentalModal() {
 
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
-    document.getElementById('r-id').value = '';
     document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
-
     const today = new Date().toISOString().substr(0, 10);
     document.getElementById('r-date').value = today;
-
     document.getElementById('rentalModal').style.display = 'flex';
 }
 
-const rentalData = [];
 const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
 const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
+const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals';
 
 let members = [];
 let equipmentList = [];
 
 function loadActiveMembers() {
-    fetch(apiMembers, {
-        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
-    })
-    .then(res => res.json())
-    .then(data => {
-        members = data.filter(m => 
-            m.status.toLowerCase() === "aktiv" &&
-            m.ttu_gueltigkeit &&
-            !isNaN(new Date(m.ttu_gueltigkeit)) &&
-            new Date(m.ttu_gueltigkeit) >= new Date()
-        );
-    });
+    fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+        .then(res => res.json())
+        .then(data => {
+            members = data.filter(m => m.status.toLowerCase() === "aktiv" && m.ttu_gueltigkeit && new Date(m.ttu_gueltigkeit) >= new Date());
+        });
 }
 
 function loadAvailableEquipment() {
-    fetch(apiEquipment, {
-        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
-    })
-    .then(res => res.json())
-    .then(data => {
-        equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verleihdatum);
+    fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+        .then(res => res.json())
+        .then(data => {
+            equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verleihdatum);
+        });
+}
+
+async function renderRentalTable() {
+    const response = await fetch(apiRentals);
+    const rentals = await response.json();
+
+    const tbody = document.querySelector('#rental-table tbody');
+    const cardsContainer = document.querySelector('.rental-cards');
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
+
+    rentals.forEach(rental => {
+        const member = members.find(m => m.id == rental.member_id);
+        const equipment = equipmentList.find(eq => eq.id == rental.equipment_id);
+        const memberName = member ? `${member.vorname} ${member.name}` : rental.member_id;
+        const equipmentName = equipment ? equipment.name : rental.equipment_id;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${memberName}</td>
+            <td>${equipmentName}</td>
+            <td>${rental.rental_date}</td>
+            <td>${rental.return_date || '-'}</td>
+            <td>${rental.status}</td>
+            <td><button onclick='confirmReturn(${JSON.stringify(rental)})'><span style="font-size:18px;">🚪</span></button></td>
+        `;
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = "equipment-card";
+        card.innerHTML = `
+            <h3>${memberName}</h3>
+            <p><strong>Equipment:</strong> ${equipmentName}</p>
+            <p><strong>Verleihdatum:</strong> ${rental.rental_date}</p>
+            <p><strong>Status:</strong> ${rental.status}</p>
+            <button onclick='confirmReturn(${JSON.stringify(rental)})'><span style="font-size:18px;">🚪</span></button>
+        `;
+        cardsContainer.appendChild(card);
     });
 }
+
+async function confirmReturn(rental) {
+    const member = members.find(m => m.id == rental.member_id);
+    const equipment = equipmentList.find(eq => eq.id == rental.equipment_id);
+    const memberName = member ? `${member.vorname} ${member.name}` : rental.member_id;
+    const equipmentName = equipment ? equipment.name : rental.equipment_id;
+
+    const today = new Date().toISOString().substr(0, 10);
+    const confirmed = confirm(`Rückgabe bestätigen:\n\nMitglied: ${memberName}\nEquipment: ${equipmentName}\nDatum: ${today}`);
+
+    if (confirmed) {
+        await fetch(`${apiRentals}/${rental.id}/return`, { method: 'PUT' });
+        renderRentalTable();
+    }
+}
+
+document.getElementById('rental-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const rental = {
+        member_id: document.getElementById('r-member-id').value,
+        equipment_id: document.getElementById('r-equipment-id').value,
+        rental_date: document.getElementById('r-date').value,
+    };
+
+    await fetch(apiRentals, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rental)
+    });
+
+    closeRentalModal();
+    renderRentalTable();
+});
 
 const memberSearchInput = document.getElementById('r-member-search');
 const memberSuggestions = document.getElementById('r-member-suggestions');
@@ -152,17 +212,14 @@ memberSearchInput.addEventListener('input', () => {
     memberSuggestions.innerHTML = '';
     if (!search) return;
 
-    const results = members.filter(member => 
-        `${member.vorname} ${member.name}`.toLowerCase().includes(search)
-    ).slice(0, 3);
-
+    const results = members.filter(member => (`${member.vorname} ${member.name}`).toLowerCase().includes(search)).slice(0, 3);
     if (results.length === 1) {
         memberSearchInput.value = `${results[0].vorname} ${results[0].name}`;
         memberIdInput.value = results[0].id;
     } else {
         results.forEach(member => {
             const li = document.createElement('li');
-            li.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0,10)})`;
+            li.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0, 10)})`;
             li.onclick = () => {
                 memberSearchInput.value = `${member.vorname} ${member.name}`;
                 memberIdInput.value = member.id;
@@ -207,79 +264,10 @@ equipmentSearchInput.addEventListener('input', () => {
     }
 });
 
-function renderRentalTable(data) {
-    const tbody = document.querySelector('#rental-table tbody');
-    const cardsContainer = document.querySelector('.rental-cards');
-    tbody.innerHTML = '';
-    cardsContainer.innerHTML = '';
-
-    data.forEach(rental => {
-        const member = members.find(m => m.id == rental.memberId);
-        const equipment = equipmentList.find(eq => eq.id == rental.equipmentId);
-        const memberName = member ? `${member.vorname} ${member.name}` : rental.memberId;
-        const equipmentName = equipment ? equipment.name : rental.equipmentId;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${memberName}</td>
-            <td>${equipmentName}</td>
-            <td>${rental.date}</td>
-            <td>${rental.returnDate || '-'}</td>
-            <td>${rental.status}</td>
-            <td><button onclick='confirmReturn(${JSON.stringify(rental)})' title="Rückgabe"><span style="font-size:18px;">🚪</span></button></td>
-        `;
-        tbody.appendChild(tr);
-
-        const card = document.createElement('div');
-        card.className = "equipment-card";
-        card.innerHTML = `
-            <h3>${memberName}</h3>
-            <p><strong>Equipment:</strong> ${equipmentName}</p>
-            <p><strong>Verleihdatum:</strong> ${rental.date}</p>
-            <p><strong>Rückgabe:</strong> ${rental.returnDate || '-'}</p>
-            <p><strong>Status:</strong> ${rental.status}</p>
-            <button onclick='confirmReturn(${JSON.stringify(rental)})' title="Rückgabe"><span style="font-size:18px;">🚪</span></button>
-        `;
-        cardsContainer.appendChild(card);
-    });
-}
-
-function confirmReturn(rental) {
-    const member = members.find(m => m.id == rental.memberId);
-    const equipment = equipmentList.find(eq => eq.id == rental.equipmentId);
-    const memberName = member ? `${member.vorname} ${member.name}` : rental.memberId;
-    const equipmentName = equipment ? equipment.name : rental.equipmentId;
-
-    const today = new Date().toISOString().substr(0, 10);
-    const confirmed = confirm(`Rückgabe bestätigen:\n\nMitglied: ${memberName}\nEquipment: ${equipmentName}\nDatum der Rückgabe: ${today}\n\nOK für Rückgabe, Abbrechen für Abbruch.`);
-
-    if (confirmed) {
-        rental.returnDate = today;
-        rental.status = "Zurückgegeben";
-        renderRentalTable(rentalData);
-    }
-}
-
-document.getElementById('rental-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const rental = {
-        memberId: document.getElementById('r-member-id').value,
-        equipmentId: document.getElementById('r-equipment-id').value,
-        date: document.getElementById('r-date').value,
-        returnDate: "",
-        status: "Verliehen"
-    };
-
-    rentalData.push(rental);
-    closeRentalModal();
-    renderRentalTable(rentalData);
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     loadActiveMembers();
     loadAvailableEquipment();
-    renderRentalTable(rentalData);
+    renderRentalTable();
 });
 </script>
 
