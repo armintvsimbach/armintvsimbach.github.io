@@ -113,6 +113,7 @@ const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals';
 
 let members = [];
 let equipmentList = [];
+let allEquipmentList = [];
 
 function loadActiveMembers() {
     return fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
@@ -123,16 +124,20 @@ function loadActiveMembers() {
 }
 
 function loadAvailableEquipment() {
-    fetch(apiEquipment, {
-        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
-    })
-    .then(res => res.json())
-    .then(data => {
-        // Nur Equipment laden, das aktiv und NICHT verliehen ist
-        equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verliehen);
-    });
+    return fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+        .then(res => res.json())
+        .then(data => {
+            equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verliehen);
+        });
 }
 
+function loadAllEquipment() {
+    return fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+        .then(res => res.json())
+        .then(data => {
+            allEquipmentList = data;
+        });
+}
 
 function formatDate(dateString) {
     if (!dateString) return '-';
@@ -151,7 +156,7 @@ async function renderRentalTable() {
 
     rentals.forEach(rental => {
         const member = members.find(m => m.id == rental.member_id);
-        const equipment = equipmentList.find(eq => eq.id == rental.equipment_id);
+        const equipment = allEquipmentList.find(eq => eq.id == rental.equipment_id);
         const memberName = member ? `${member.vorname} ${member.name}` : rental.member_id;
         const equipmentName = equipment ? equipment.name : rental.equipment_id;
 
@@ -180,16 +185,12 @@ async function renderRentalTable() {
 }
 
 async function confirmReturn(rental) {
-    const member = members.find(m => m.id == rental.member_id);
-    const equipment = equipmentList.find(eq => eq.id == rental.equipment_id);
-    const memberName = member ? `${member.vorname} ${member.name}` : rental.member_id;
-    const equipmentName = equipment ? equipment.name : rental.equipment_id;
-
-    const today = new Date().toISOString().substr(0, 10);
-    const confirmed = confirm(`Rückgabe bestätigen:\n\nMitglied: ${memberName}\nEquipment: ${equipmentName}\nDatum: ${today}`);
+    const today = new Date().toISOString().split('T')[0];
+    const confirmed = confirm(`Rückgabe bestätigen:\n\nMitglied: ${rental.member_id}\nEquipment: ${rental.equipment_id}\nDatum: ${today}`);
 
     if (confirmed) {
         await fetch(`${apiRentals}/${rental.id}/return`, { method: 'PUT' });
+        await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
         renderRentalTable();
     }
 }
@@ -210,6 +211,7 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
     });
 
     closeRentalModal();
+    await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
     renderRentalTable();
 });
 
@@ -262,8 +264,7 @@ equipmentSearchInput.addEventListener('input', () => {
     } else {
         results.forEach(eq => {
             const li = document.createElement('li');
-            const imgSrc = eq.bild_base64 ? `data:image/jpeg;base64,${eq.bild_base64}` : 'placeholder.jpg';
-            li.innerHTML = `<img src="${imgSrc}" alt=""><div><strong>${eq.name}</strong><br>${eq.kategorie}, ${eq.beschreibung}, ${eq.groesse}</div>`;
+            li.textContent = `${eq.name} (${eq.kategorie}, ${eq.beschreibung}, ${eq.groesse})`;
             li.onclick = () => {
                 equipmentSearchInput.value = eq.name;
                 equipmentIdInput.value = eq.id;
@@ -277,12 +278,12 @@ equipmentSearchInput.addEventListener('input', () => {
 document.addEventListener('DOMContentLoaded', () => {
     Promise.all([
         loadActiveMembers(),
+        loadAllEquipment(),
         loadAvailableEquipment()
     ]).then(() => {
         renderRentalTable();
     });
 });
-
 </script>
 
 <style>
@@ -309,12 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 .autocomplete-suggestions li:hover {
     background: #eee;
-}
-
-.autocomplete-suggestions img {
-    width: 40px;
-    height: auto;
-    border-radius: 4px;
 }
 
 @media (max-width: 600px) {
