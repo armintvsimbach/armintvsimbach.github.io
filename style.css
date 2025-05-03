@@ -348,3 +348,35 @@ input[type="text"], input[type="email"], input[type="date"], input[type="passwor
 .autocomplete-suggestions li:hover {
     background: #eee;
 }
+
+.autocomplete-suggestions li:hover {
+    background: #eee;
+}
+
+.autocomplete-suggestions img {
+    width: 40px;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* Mobilgeräte (bis 600px) → Nur Karten anzeigen, Tabelle ausblenden */
+@media (max-width: 600px) {
+    #rental-table {
+        display: none;
+    }
+    .rental-cards {
+        display: block;
+    }
+}
+
+/* Desktop (ab 601px) → Nur Tabelle anzeigen, Karten ausblenden */
+@media (min-width: 601px) {
+    #rental-table {
+        display: table;
+    }
+    .rental-cards {
+        display: none;
+    }
+}
+
+

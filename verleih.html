@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verleih - Tauchclub Simbach am Inn</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verleih - Tauchclub Simbach am Inn</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -13,7 +13,6 @@
         <div class="burger" onclick="toggleMenu()">☰</div>
         <h1>Verleih - Tauchclub Simbach am Inn</h1>
     </div>
-
     <nav id="main-nav">
         <a href="index.html">Start</a>
         <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
@@ -61,9 +60,12 @@
                     <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
                     <input type="hidden" id="r-member-id">
                 </td></tr>
-                <tr><td>Equipment:</td><td><input type="text" id="r-equipment" required></td></tr>
+                <tr><td>Equipment:</td><td>
+                    <input type="text" id="r-equipment-search" placeholder="Equipment suchen..." autocomplete="off" required>
+                    <ul id="r-equipment-suggestions" class="autocomplete-suggestions"></ul>
+                    <input type="hidden" id="r-equipment-id">
+                </td></tr>
                 <tr><td>Verleihdatum:</td><td><input type="date" id="r-date" required></td></tr>
-                <!--<tr><td>Rückgabedatum:</td><td><input type="date" id="r-return"></td></tr>-->
             </table>
             <br>
             <input type="hidden" id="r-id">
@@ -100,15 +102,6 @@ function closeRentalModal() {
 
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
-	const today = new Date().toISOString().substr(0, 10);
-	document.getElementById('r-date').value = today;
-    document.getElementById('r-id').value = '';
-    document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
-    document.getElementById('rentalModal').style.display = 'flex';
-}
-
-function openAddRentalModal() {
-    document.getElementById('rental-form').reset();
     document.getElementById('r-id').value = '';
     document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
 
@@ -117,9 +110,13 @@ function openAddRentalModal() {
 
     document.getElementById('rentalModal').style.display = 'flex';
 }
+
 const rentalData = [];
 const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
+const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
+
 let members = [];
+let equipmentList = [];
 
 function loadActiveMembers() {
     fetch(apiMembers, {
@@ -136,6 +133,16 @@ function loadActiveMembers() {
     });
 }
 
+function loadAvailableEquipment() {
+    fetch(apiEquipment, {
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    })
+    .then(res => res.json())
+    .then(data => {
+        equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verleihdatum);
+    });
+}
+
 const memberSearchInput = document.getElementById('r-member-search');
 const memberSuggestions = document.getElementById('r-member-suggestions');
 const memberIdInput = document.getElementById('r-member-id');
@@ -143,7 +150,6 @@ const memberIdInput = document.getElementById('r-member-id');
 memberSearchInput.addEventListener('input', () => {
     const search = memberSearchInput.value.toLowerCase();
     memberSuggestions.innerHTML = '';
-
     if (!search) return;
 
     const results = members.filter(member => 
@@ -153,7 +159,6 @@ memberSearchInput.addEventListener('input', () => {
     if (results.length === 1) {
         memberSearchInput.value = `${results[0].vorname} ${results[0].name}`;
         memberIdInput.value = results[0].id;
-        memberSuggestions.innerHTML = '';
     } else {
         results.forEach(member => {
             const li = document.createElement('li');
@@ -168,6 +173,40 @@ memberSearchInput.addEventListener('input', () => {
     }
 });
 
+const equipmentSearchInput = document.getElementById('r-equipment-search');
+const equipmentSuggestions = document.getElementById('r-equipment-suggestions');
+const equipmentIdInput = document.getElementById('r-equipment-id');
+
+equipmentSearchInput.addEventListener('input', () => {
+    const search = equipmentSearchInput.value.toLowerCase();
+    equipmentSuggestions.innerHTML = '';
+    if (!search) return;
+
+    const results = equipmentList.filter(eq =>
+        (eq.name && eq.name.toLowerCase().includes(search)) ||
+        (eq.kategorie && eq.kategorie.toLowerCase().includes(search)) ||
+        (eq.beschreibung && eq.beschreibung.toLowerCase().includes(search)) ||
+        (eq.groesse && eq.groesse.toLowerCase().includes(search))
+    ).slice(0, 3);
+
+    if (results.length === 1) {
+        equipmentSearchInput.value = results[0].name;
+        equipmentIdInput.value = results[0].id;
+    } else {
+        results.forEach(eq => {
+            const li = document.createElement('li');
+            const imgSrc = eq.bild_base64 ? `data:image/jpeg;base64,${eq.bild_base64}` : 'placeholder.jpg';
+            li.innerHTML = `<img src="${imgSrc}" alt=""><div><strong>${eq.name}</strong><br>${eq.kategorie}, ${eq.beschreibung}, ${eq.groesse}</div>`;
+            li.onclick = () => {
+                equipmentSearchInput.value = eq.name;
+                equipmentIdInput.value = eq.id;
+                equipmentSuggestions.innerHTML = '';
+            };
+            equipmentSuggestions.appendChild(li);
+        });
+    }
+});
+
 function renderRentalTable(data) {
     const tbody = document.querySelector('#rental-table tbody');
     const cardsContainer = document.querySelector('.rental-cards');
@@ -176,31 +215,49 @@ function renderRentalTable(data) {
 
     data.forEach(rental => {
         const member = members.find(m => m.id == rental.memberId);
+        const equipment = equipmentList.find(eq => eq.id == rental.equipmentId);
         const memberName = member ? `${member.vorname} ${member.name}` : rental.memberId;
+        const equipmentName = equipment ? equipment.name : rental.equipmentId;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${memberName}</td>
-            <td>${rental.equipment}</td>
+            <td>${equipmentName}</td>
             <td>${rental.date}</td>
             <td>${rental.returnDate || '-'}</td>
             <td>${rental.status}</td>
-            <td><button onclick='editRental(${JSON.stringify(rental)})'>Bearbeiten</button></td>
+            <td><button onclick='confirmReturn(${JSON.stringify(rental)})' title="Rückgabe"><span style="font-size:18px;">🚪</span></button></td>
         `;
         tbody.appendChild(tr);
 
         const card = document.createElement('div');
-        card.className = "member-card";
+        card.className = "equipment-card";
         card.innerHTML = `
             <h3>${memberName}</h3>
-            <p>Equipment: ${rental.equipment}</p>
-            <p>Verleihdatum: ${rental.date}</p>
-            <p>Rückgabe: ${rental.returnDate || '-'}</p>
-            <p>Status: ${rental.status}</p>
-            <button onclick='editRental(${JSON.stringify(rental)})'>Bearbeiten</button>
+            <p><strong>Equipment:</strong> ${equipmentName}</p>
+            <p><strong>Verleihdatum:</strong> ${rental.date}</p>
+            <p><strong>Rückgabe:</strong> ${rental.returnDate || '-'}</p>
+            <p><strong>Status:</strong> ${rental.status}</p>
+            <button onclick='confirmReturn(${JSON.stringify(rental)})' title="Rückgabe"><span style="font-size:18px;">🚪</span></button>
         `;
         cardsContainer.appendChild(card);
     });
+}
+
+function confirmReturn(rental) {
+    const member = members.find(m => m.id == rental.memberId);
+    const equipment = equipmentList.find(eq => eq.id == rental.equipmentId);
+    const memberName = member ? `${member.vorname} ${member.name}` : rental.memberId;
+    const equipmentName = equipment ? equipment.name : rental.equipmentId;
+
+    const today = new Date().toISOString().substr(0, 10);
+    const confirmed = confirm(`Rückgabe bestätigen:\n\nMitglied: ${memberName}\nEquipment: ${equipmentName}\nDatum der Rückgabe: ${today}\n\nOK für Rückgabe, Abbrechen für Abbruch.`);
+
+    if (confirmed) {
+        rental.returnDate = today;
+        rental.status = "Zurückgegeben";
+        renderRentalTable(rentalData);
+    }
 }
 
 document.getElementById('rental-form').addEventListener('submit', (e) => {
@@ -208,10 +265,10 @@ document.getElementById('rental-form').addEventListener('submit', (e) => {
 
     const rental = {
         memberId: document.getElementById('r-member-id').value,
-        equipment: document.getElementById('r-equipment').value,
+        equipmentId: document.getElementById('r-equipment-id').value,
         date: document.getElementById('r-date').value,
-        returnDate: document.getElementById('r-return').value,
-        status: document.getElementById('r-return').value ? "Zurückgegeben" : "Verliehen"
+        returnDate: "",
+        status: "Verliehen"
     };
 
     rentalData.push(rental);
@@ -219,20 +276,9 @@ document.getElementById('rental-form').addEventListener('submit', (e) => {
     renderRentalTable(rentalData);
 });
 
-function editRental(rental) {
-    document.getElementById('r-id').value = rental.id || '';
-    const member = members.find(m => m.id == rental.memberId);
-    document.getElementById('r-member-search').value = member ? `${member.vorname} ${member.name}` : rental.memberId;
-    document.getElementById('r-member-id').value = rental.memberId;
-    document.getElementById('r-equipment').value = rental.equipment;
-    document.getElementById('r-date').value = rental.date;
-    document.getElementById('r-return').value = rental.returnDate;
-    document.getElementById('rental-modal-title').innerText = "Verleih bearbeiten";
-    document.getElementById('rentalModal').style.display = 'flex';
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     loadActiveMembers();
+    loadAvailableEquipment();
     renderRentalTable(rentalData);
 });
 </script>
@@ -254,10 +300,34 @@ document.addEventListener('DOMContentLoaded', () => {
 .autocomplete-suggestions li {
     padding: 8px;
     cursor: pointer;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .autocomplete-suggestions li:hover {
     background: #eee;
+}
+
+.autocomplete-suggestions img {
+    width: 40px;
+    height: auto;
+    border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+    #rental-table {
+        display: none;
+    }
+    .rental-cards {
+        display: block;
+    }
+}
+
+@media (min-width: 601px) {
+    .rental-cards {
+        display: none;
+    }
 }
 </style>
 
