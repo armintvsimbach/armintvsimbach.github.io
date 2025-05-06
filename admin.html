@@ -99,6 +99,21 @@ const apiEquipment = "https://tcs-manager-backend.onrender.com/api/equipment";
 
 let members = [], equipment = [], currentUser = null;
 
+// Direkt beim Start Benutzerstatistik laden
+document.addEventListener("DOMContentLoaded", () => {
+    loadUserStats();
+});
+
+function loadUserStats() {
+    fetch(apiUsers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+    .then(r => r.json())
+    .then(users => {
+        let active = users.filter(u => u.active).length;
+        let inactive = users.length - active;
+        document.getElementById('user-stats').innerText = `${active} aktiv / ${inactive} gesperrt`;
+    });
+}
+
 function showAlert(msg) {
     const alert = document.getElementById('alert');
     alert.innerText = msg;
