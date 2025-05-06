@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -10,10 +11,8 @@
 
 <header>
     <div class="header-container">
-        <img src="Logo.png" alt="Vereinslogo" class="logo">
         <h1>TC Simbach</h1>
     </div>
-
     <div class="burger" onclick="toggleMenu()">☰</div>
     <nav id="main-nav">
         <a href="index.html">Start</a>
@@ -26,7 +25,6 @@
 
 <main>
     <h2>Verleihübersicht</h2>
-
     <div style="margin-bottom: 20px;">
         <button onclick="openAddRentalModal()">➕ Neuen Verleih erfassen</button>
         <input type="text" id="search-rentals" placeholder="Verleihvorgänge suchen">
@@ -95,10 +93,7 @@ checkLogin();
 
 const user = getUserInfo();
 if (user) {
-    document.getElementById('user-info').innerHTML = `
-        Angemeldet als <strong>${user.username}</strong> (${user.role})
-        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-    `;
+    document.getElementById('user-info').innerHTML = `Angemeldet als <strong>${user.username}</strong> (${user.role}) <button onclick="logout()" style="margin-left: 10px;">Logout</button>`;
 }
 
 function logout() {
@@ -117,61 +112,45 @@ function closeRentalModal() {
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
     document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
-
-    const today = new Date().toISOString().substr(0, 10);
-    document.getElementById('r-date').value = today;
+    document.getElementById('r-date').value = new Date().toISOString().substr(0, 10);
     document.getElementById('rentalModal').style.display = 'flex';
-
-    // Mitglied Feld zurücksetzen + Clear Button entfernen
-    const memberInput = document.getElementById('r-member-search');
-    const memberHidden = document.getElementById('r-member-id');
-    memberInput.disabled = false;
-    memberInput.value = '';
-    memberHidden.value = '';
-    const existingMemberClear = memberInput.parentNode.querySelector('.clear-button');
-    if (existingMemberClear) existingMemberClear.remove();
-
-    // Equipment Feld zurücksetzen + Clear Button entfernen
-    const equipmentInput = document.getElementById('r-equipment-search');
-    const equipmentHidden = document.getElementById('r-equipment-id');
-    equipmentInput.disabled = false;
-    equipmentInput.value = '';
-    equipmentHidden.value = '';
-    const existingEquipmentClear = equipmentInput.parentNode.querySelector('.clear-button');
-    if (existingEquipmentClear) existingEquipmentClear.remove();
+    resetInput('r-member-search', 'r-member-id');
+    resetInput('r-equipment-search', 'r-equipment-id');
+    setupAutocomplete(); // <<<<<<<< NEU hinzugefügt, jetzt wird es IMMER aktiv
 }
 
+function resetInput(inputId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    input.disabled = false;
+    input.value = '';
+    hidden.value = '';
+    const clearBtn = input.parentNode.querySelector('.clear-button');
+    if (clearBtn) clearBtn.remove();
+}
 
-const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
-const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
-const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals';
+const api = {
+    members: 'https://tcs-manager-backend.onrender.com/api/members',
+    equipment: 'https://tcs-manager-backend.onrender.com/api/equipment',
+    rentals: 'https://tcs-manager-backend.onrender.com/api/rentals'
+};
 
-let members = [];
-let equipmentList = [];
-let allEquipmentList = [];
+let members = [], equipmentList = [], allEquipmentList = [];
+
+function fetchWithAuth(url) {
+    return fetch(url, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json());
+}
 
 function loadActiveMembers() {
-    return fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
-        .then(res => res.json())
-        .then(data => {
-            members = data.filter(m => m.status.toLowerCase() === "aktiv" && m.ttu_gueltigkeit && new Date(m.ttu_gueltigkeit) >= new Date());
-        });
+    return fetchWithAuth(api.members).then(data => members = data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
 }
 
 function loadAvailableEquipment() {
-    return fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
-        .then(res => res.json())
-        .then(data => {
-            equipmentList = data.filter(eq => eq.status === "Aktiv" && !eq.verliehen);
-        });
+    return fetchWithAuth(api.equipment).then(data => equipmentList = data.filter(e => e.status === "Aktiv" && !e.verliehen));
 }
 
 function loadAllEquipment() {
-    return fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
-        .then(res => res.json())
-        .then(data => {
-            allEquipmentList = data;
-        });
+    return fetchWithAuth(api.equipment).then(data => allEquipmentList = data);
 }
 
 function formatDate(dateString) {
@@ -181,9 +160,7 @@ function formatDate(dateString) {
 }
 
 async function renderRentalTable() {
-    const response = await fetch(apiRentals);
-    const rentals = await response.json();
-
+    const rentals = await fetchWithAuth(api.rentals);
     const tbody = document.querySelector('#rental-table tbody');
     const cardsContainer = document.querySelector('.rental-cards');
     tbody.innerHTML = '';
@@ -221,26 +198,17 @@ async function renderRentalTable() {
 
 async function confirmReturn(rental) {
     const today = new Date().toISOString().split('T')[0];
-    const confirmed = confirm(`Rückgabe bestätigen:\n\nMitglied: ${rental.member_id}\nEquipment: ${rental.equipment_id}\nDatum: ${today}`);
+    if (!confirm(`Rückgabe bestätigen:
 
-    if (confirmed) {
-        await fetch(`${apiRentals}/${rental.id}/return`, { method: 'PUT' });
+Mitglied: ${rental.member_id}
+Equipment: ${rental.equipment_id}
+Datum: ${today}`)) return;
 
-        // Audit Log Rückgabe
-        await authorizedFetch("https://tcs-manager-backend.onrender.com/api/equipment-log", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                equipment_id: rental.equipment_id,
-                action: "rueckgabe"
-            })
-        });
+    await fetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT', headers: { "Authorization": "Bearer " + localStorage.getItem("token") } });
 
-        await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
-        renderRentalTable();
-    }
+    await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
+    renderRentalTable();
 }
-
 
 function setClearButton(inputElement, hiddenInput) {
     const wrapper = inputElement.parentNode;
@@ -258,111 +226,49 @@ function setClearButton(inputElement, hiddenInput) {
     };
 }
 
-const memberSearchInput = document.getElementById('r-member-search');
-const memberSuggestions = document.getElementById('r-member-suggestions');
-const memberIdInput = document.getElementById('r-member-id');
+function setupAutocomplete() {
+    setupAutocompleteField('r-member-search', 'r-member-suggestions', 'r-member-id', members, m => `${m.vorname} ${m.name}`);
+    setupAutocompleteField('r-equipment-search', 'r-equipment-suggestions', 'r-equipment-id', equipmentList, e => `${e.name} (${e.kategorie}, ${e.beschreibung}, ${e.groesse})`);
+}
 
-memberSearchInput.addEventListener('input', () => {
-    const search = memberSearchInput.value.toLowerCase();
-    memberSuggestions.innerHTML = '';
-    if (!search) {
-        memberSearchInput.disabled = false;
-        return;
-    }
+function setupAutocompleteField(inputId, suggestionsId, hiddenId, list, displayFn) {
+    const input = document.getElementById(inputId);
+    const suggestions = document.getElementById(suggestionsId);
+    const hidden = document.getElementById(hiddenId);
 
-    const results = members.filter(member => (`${member.vorname} ${member.name}`).toLowerCase().includes(search)).slice(0, 3);
+    input.oninput = () => {
+        const search = input.value.toLowerCase();
+        suggestions.innerHTML = '';
+        if (!search) return;
 
-    if (results.length === 1) {
-        const member = results[0];
-        memberSearchInput.value = `${member.vorname} ${member.name}`;
-        memberIdInput.value = member.id;
-        memberSearchInput.disabled = true;
-        setClearButton(memberSearchInput, memberIdInput);
-    } else {
-        results.forEach(member => {
+        const results = list.filter(item => displayFn(item).toLowerCase().includes(search)).slice(0, 3);
+        results.forEach(item => {
             const li = document.createElement('li');
-            li.textContent = `${member.vorname} ${member.name} (gültig bis ${member.ttu_gueltigkeit.substring(0, 10)})`;
+            li.textContent = displayFn(item);
             li.onclick = () => {
-                memberSearchInput.value = `${member.vorname} ${member.name}`;
-                memberIdInput.value = member.id;
-                memberSuggestions.innerHTML = '';
-                memberSearchInput.disabled = true;
-                setClearButton(memberSearchInput, memberIdInput);
+                input.value = displayFn(item);
+                hidden.value = item.id;
+                suggestions.innerHTML = '';
+                input.disabled = true;
+                setClearButton(input, hidden);
             };
-            memberSuggestions.appendChild(li);
+            suggestions.appendChild(li);
         });
-    }
-});
-
-const equipmentSearchInput = document.getElementById('r-equipment-search');
-const equipmentSuggestions = document.getElementById('r-equipment-suggestions');
-const equipmentIdInput = document.getElementById('r-equipment-id');
-
-equipmentSearchInput.addEventListener('input', () => {
-    const search = equipmentSearchInput.value.toLowerCase();
-    equipmentSuggestions.innerHTML = '';
-    if (!search) {
-        equipmentSearchInput.disabled = false;
-        return;
-    }
-
-    const results = equipmentList.filter(eq =>
-        (eq.name && eq.name.toLowerCase().includes(search)) ||
-        (eq.kategorie && eq.kategorie.toLowerCase().includes(search)) ||
-        (eq.beschreibung && eq.beschreibung.toLowerCase().includes(search)) ||
-        (eq.groesse && eq.groesse.toLowerCase().includes(search))
-    ).slice(0, 3);
-
-    if (results.length === 1) {
-        const eq = results[0];
-        equipmentSearchInput.value = eq.name;
-        equipmentIdInput.value = eq.id;
-        equipmentSearchInput.disabled = true;
-        setClearButton(equipmentSearchInput, equipmentIdInput);
-    } else {
-        results.forEach(eq => {
-            const li = document.createElement('li');
-            li.textContent = `${eq.name} (${eq.kategorie}, ${eq.beschreibung}, ${eq.groesse})`;
-            li.onclick = () => {
-                equipmentSearchInput.value = eq.name;
-                equipmentIdInput.value = eq.id;
-                equipmentSuggestions.innerHTML = '';
-                equipmentSearchInput.disabled = true;
-                setClearButton(equipmentSearchInput, equipmentIdInput);
-            };
-            equipmentSuggestions.appendChild(li);
-        });
-    }
-});
+    };
+}
 
 document.getElementById('rental-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const rental = {
         member_id: document.getElementById('r-member-id').value,
         equipment_id: document.getElementById('r-equipment-id').value,
         rental_date: document.getElementById('r-date').value,
     };
 
-    // Verleih speichern
-    await fetch(apiRentals, {
+    await fetch(api.rentals, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
         body: JSON.stringify(rental)
-    });
-
-    // Audit Trail - Verleihaktion speichern
-    const dueDate = new Date(rental.rental_date);
-    dueDate.setDate(dueDate.getDate() + 14); // 2 Wochen später
-
-    await authorizedFetch("https://tcs-manager-backend.onrender.com/api/equipment-log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            equipment_id: rental.equipment_id,
-            action: "verleih",
-            due_date: dueDate.toISOString().split('T')[0]
-        })
     });
 
     closeRentalModal();
@@ -370,15 +276,9 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
     renderRentalTable();
 });
 
-
 document.addEventListener('DOMContentLoaded', () => {
-    Promise.all([
-        loadActiveMembers(),
-        loadAllEquipment(),
-        loadAvailableEquipment()
-    ]).then(() => {
-        renderRentalTable();
-    });
+    Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()])
+        .then(() => renderRentalTable());
 });
 </script>
 

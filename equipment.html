@@ -17,8 +17,8 @@
   
   <nav id="main-nav">
     <a href="index.html">Start</a>
+	<a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="verleih.html">Verleih</a>
     <a href="equipment.html">Equipmentverwaltung</a>
     <a href="admin.html">Admin</a>
   </nav>
@@ -44,7 +44,7 @@
         <th>Wartungsintervall</th>
         <th>Nächste Wartung</th>
         <th>Status</th>
-        <th>Aktion</th>
+        <th>Aktionen</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -54,31 +54,31 @@
 </main>
 
 <!-- Modal -->
-<div class="modal" id="equipmentModal" style="display: none;">
+<div class="modal" id="equipmentModal" style="display:none;">
   <div class="modal-content">
-    <h2 id="modal-title">Equipment bearbeiten</h2>
+    <h2 id="modal-title">Neues Equipment</h2>
     <form id="equipment-form">
-      <table style="width: 100%;">
+      <input type="hidden" id="eq-id">
+      <input type="hidden" id="eq-bild-base64">
+      <table style="width:100%;">
         <tr><td>Name:</td><td><input type="text" id="eq-name" required></td></tr>
-        <tr><td>Bild wählen:</td><td><input type="file" id="eq-bildfile" accept="image/*"><img id="existing-image" style="display:none; width:100px; margin-top:10px;"></td></tr>
+        <tr><td>Bild:</td><td><input type="file" id="eq-bildfile" accept="image/*"><img id="existing-image" style="display:none;width:100px;margin-top:10px;"></td></tr>
         <tr><td>Kategorie:</td><td><select id="eq-kategorie" required></select></td></tr>
         <tr><td>Beschreibung:</td><td><input type="text" id="eq-beschreibung"></td></tr>
         <tr><td>Größe:</td><td><input type="text" id="eq-groesse"></td></tr>
         <tr><td>Letzte Wartung:</td><td><input type="date" id="eq-letztewartung"></td></tr>
         <tr><td>Wartungsintervall (Monate):</td><td><input type="number" id="eq-wartungsintervall"></td></tr>
         <tr><td>Status:</td><td>
-          <select id="eq-status" required>
-            <option value="Aktiv">Aktiv</option>
-            <option value="Inaktiv">Inaktiv</option>
-            <option value="Eingelagert">Eingelagert</option>
-            <option value="Verschrottet">Verschrottet</option>
-            <option value="Wartung">Wartung</option>
-            <option value="Schwund">Schwund</option>
+          <select id="eq-status">
+            <option>Aktiv</option>
+            <option>Inaktiv</option>
+            <option>Wartung</option>
+            <option>Eingelagert</option>
+            <option>Verschrottet</option>
+            <option>Schwund</option>
           </select>
         </td></tr>
       </table>
-      <input type="hidden" id="eq-id">
-      <input type="hidden" id="eq-bild-base64">
       <button type="submit">Speichern</button>
       <button type="button" onclick="closeEquipmentModal()">Abbrechen</button>
     </form>
@@ -91,20 +91,18 @@
 <script>
 const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
 const apiCategories = 'https://tcs-manager-backend.onrender.com/api/categories';
-
 let equipmentData = [];
 let categories = [];
+
+checkLoginAndLoad();
 
 function checkLoginAndLoad() {
   checkLogin();
   const user = getUserInfo();
   if (user) {
-    document.getElementById('user-info').innerHTML = `
-      Angemeldet als <strong>${user.username}</strong> (${user.role})
-      <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-    `;
+    document.getElementById('user-info').innerHTML = `Angemeldet als <strong>${user.username}</strong> (${user.role}) <button onclick="logout()">Logout</button>`;
   }
-  fetchEquipmentAndCategories();
+  loadData();
 }
 
 function logout() {
@@ -116,10 +114,10 @@ function toggleMenu() {
   document.getElementById('main-nav').classList.toggle('show');
 }
 
-function fetchEquipmentAndCategories() {
+function loadData() {
   Promise.all([
-    fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(res => res.json()),
-    fetch(apiCategories, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(res => res.json())
+    fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json()),
+    fetch(apiCategories, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json())
   ]).then(([equipment, cats]) => {
     equipmentData = equipment;
     categories = cats;
@@ -137,7 +135,6 @@ function renderEquipmentTable(data) {
     const nextMaintenance = calculateNextMaintenance(eq.letzte_wartung, eq.wartungsintervall);
     const imgSrc = eq.bild_base64 ? `data:image/jpeg;base64,${eq.bild_base64}` : 'placeholder.jpg';
 
-    // Tabelle (Desktop)
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><img src="${imgSrc}" style="width:50px;height:auto;"></td>
@@ -149,22 +146,21 @@ function renderEquipmentTable(data) {
       <td>${eq.wartungsintervall || '-'}</td>
       <td>${nextMaintenance || '-'}</td>
       <td>${eq.status}</td>
-      <td><button onclick='openEditEquipmentModal(${JSON.stringify(eq)})'>✏️</button></td>
+      <td><button onclick='editEquipment(${JSON.stringify(eq)})'>✏️</button></td>
     `;
     tbody.appendChild(tr);
 
-    // Karten (Mobil)
     const card = document.createElement('div');
     card.className = "equipment-card";
     card.innerHTML = `
-      <img src="${imgSrc}" style="width:100%;max-width:200px;margin-bottom:10px;">
+      <img src="${imgSrc}" style="width:100%;max-width:200px;">
       <h3>${eq.name}</h3>
       <p>Kategorie: ${eq.kategorie}</p>
       <p>Status: ${eq.status}</p>
       <p>Beschreibung: ${eq.beschreibung}</p>
       <p>Größe: ${eq.groesse}</p>
       <p>Wartung fällig: ${nextMaintenance || '-'}</p>
-      <button onclick='openEditEquipmentModal(${JSON.stringify(eq)})'>Bearbeiten</button>
+      <button onclick='editEquipment(${JSON.stringify(eq)})'>Bearbeiten</button>
     `;
     cardsContainer.appendChild(card);
   });
@@ -182,11 +178,12 @@ function openAddEquipmentModal() {
   document.getElementById('equipment-form').reset();
   document.getElementById('eq-id').value = '';
   document.getElementById('existing-image').style.display = 'none';
-  populateCategorySelect();
+  document.getElementById('eq-bild-base64').value = '';
+  populateCategories();
   document.getElementById('equipmentModal').style.display = 'flex';
 }
 
-function openEditEquipmentModal(eq) {
+function editEquipment(eq) {
   openAddEquipmentModal();
   document.getElementById('modal-title').innerText = "Equipment bearbeiten";
   document.getElementById('eq-id').value = eq.id;
@@ -196,8 +193,9 @@ function openEditEquipmentModal(eq) {
   document.getElementById('eq-letztewartung').value = eq.letzte_wartung ? eq.letzte_wartung.substring(0,10) : '';
   document.getElementById('eq-wartungsintervall').value = eq.wartungsintervall;
   document.getElementById('eq-status').value = eq.status;
-  populateCategorySelect();
+  populateCategories();
   document.getElementById('eq-kategorie').value = eq.kategorie;
+
   if (eq.bild_base64) {
     const img = document.getElementById('existing-image');
     img.src = `data:image/jpeg;base64,${eq.bild_base64}`;
@@ -209,7 +207,7 @@ function closeEquipmentModal() {
   document.getElementById('equipmentModal').style.display = 'none';
 }
 
-function populateCategorySelect() {
+function populateCategories() {
   const select = document.getElementById('eq-kategorie');
   select.innerHTML = '';
   categories.forEach(cat => {
@@ -218,57 +216,54 @@ function populateCategorySelect() {
 }
 
 document.getElementById('search-equipment').addEventListener('input', () => {
-  const query = document.getElementById('search-equipment').value.toLowerCase();
+  const search = document.getElementById('search-equipment').value.toLowerCase();
   const filtered = equipmentData.filter(eq =>
-    Object.values(eq).some(val => val && val.toString().toLowerCase().includes(query))
+    Object.values(eq).some(val => val && val.toString().toLowerCase().includes(search))
   );
   renderEquipmentTable(filtered);
 });
 
 document.getElementById('eq-bildfile').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64 = e.target.result.split(',')[1];
-        document.getElementById('eq-bild-base64').value = base64;
-
-        const img = document.getElementById('existing-image');
-        img.src = `data:image/jpeg;base64,${base64}`;
-        img.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const base64 = e.target.result.split(',')[1];
+    document.getElementById('eq-bild-base64').value = base64;
+    const img = document.getElementById('existing-image');
+    img.src = `data:image/jpeg;base64,${base64}`;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 });
 
-document.getElementById('equipment-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+document.getElementById('equipment-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    const eq = {
-        name: document.getElementById('eq-name').value,
-        bild_base64: document.getElementById('eq-bild-base64').value, // <-- WICHTIG!!!
-        kategorie: document.getElementById('eq-kategorie').value,
-        beschreibung: document.getElementById('eq-beschreibung').value,
-        groesse: document.getElementById('eq-groesse').value,
-        letzte_wartung: document.getElementById('eq-letztewartung').value,
-        wartungsintervall: document.getElementById('eq-wartungsintervall').value,
-        status: document.getElementById('eq-status').value
-    };
+  const eq = {
+    name: document.getElementById('eq-name').value,
+    bild_base64: document.getElementById('eq-bild-base64').value,
+    kategorie: document.getElementById('eq-kategorie').value,
+    beschreibung: document.getElementById('eq-beschreibung').value,
+    groesse: document.getElementById('eq-groesse').value,
+    letzte_wartung: document.getElementById('eq-letztewartung').value,
+    wartungsintervall: document.getElementById('eq-wartungsintervall').value,
+    status: document.getElementById('eq-status').value
+  };
 
-    const id = document.getElementById('eq-id').value;
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${apiEquipment}/${id}` : apiEquipment;
+  const id = document.getElementById('eq-id').value;
+  const url = id ? `${apiEquipment}/${id}` : apiEquipment;
+  const method = id ? 'PUT' : 'POST';
 
-    fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(eq)
-    }).then(() => {
-        closeEquipmentModal();
-        fetchEquipmentAndCategories();
-    });
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
+    body: JSON.stringify(eq)
+  });
+
+  closeEquipmentModal();
+  loadData();
 });
-
-document.addEventListener('DOMContentLoaded', checkLoginAndLoad);
 </script>
 
 </body>
