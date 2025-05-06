@@ -318,9 +318,9 @@ function loadCronJobs() {
             tr.innerHTML = `<td>${job.name}</td><td>${job.type}</td><td>${job.cron_expression}</td>
             <td>${job.recipients}</td><td>${job.active ? "Ja" : "Nein"}</td>
             <td>
-                <button onclick='editCronJob(${JSON.stringify(job)})'>Bearbeiten</button> 
-                <button onclick='deleteCronJob(${job.id})'>Löschen</button>
-                <button onclick='runCronJobNow(${job.id})'>Jetzt Ausführen</button>
+                <button title="Bearbeiten" onclick='editCronJob(${JSON.stringify(job)})'>✏️</button> 
+                <button title="Löschen" onclick='deleteCronJob(${job.id})'>🗑️</button>
+                <button title="Jetzt Ausführen" onclick='runCronJobNow(${job.id})'>▶️</button>
             </td>`;
             tbody.appendChild(tr);
         });
