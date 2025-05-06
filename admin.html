@@ -79,6 +79,61 @@
     </div>
 </div>
 
+<!-- CRON JOB Kachel -->
+<div class="card" onclick="openCronDialog()">
+    <h3>CRON Jobs</h3>
+    <p>Geplante Aufgaben und E-Mail Erinnerungen</p>
+</div>
+
+<!-- CRON JOB Dialog -->
+<div class="modal" id="cronModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('cronModal')">X</span>
+        <h3>CRON Jobs Verwaltung</h3>
+        <button onclick="createCronJob()">➕ Neuer CRON Job</button>
+        <div class="table-wrapper">
+            <table id="cron-table">
+                <thead>
+                    <tr><th>Name</th><th>Typ</th><th>CRON Ausdruck</th><th>Empfänger</th><th>Aktiv</th><th>Aktionen</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CRON Job Bearbeiten/Erstellen Dialog -->
+<div class="modal" id="editCronModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editCronModal')">X</span>
+        <h3 id="editCronTitle">CRON Job bearbeiten</h3>
+        <form id="cron-form">
+            <input type="hidden" id="cron-id">
+            <label>Name:<input type="text" id="cron-name" required></label>
+            <label>Typ:
+                <select id="cron-type">
+                    <option value="wartung">Wartung</option>
+                    <option value="ueberfaellig">Überfällige Ausleihen</option>
+                    <option value="rueckgabe_erinnerung">Rückgabe Erinnerung</option>
+                </select>
+            </label>
+            <label>CRON Ausdruck (z.B. 0 9 * * 1 für jeden Montag 9 Uhr):
+                <input type="text" id="cron-expression" required>
+            </label>
+            <label>Empfänger (durch Komma trennen):
+                <input type="text" id="cron-recipients" required>
+            </label>
+            <label>Aktiv:
+                <select id="cron-active">
+                    <option value="true">Ja</option>
+                    <option value="false">Nein</option>
+                </select>
+            </label>
+            <button type="submit">Speichern</button>
+        </form>
+    </div>
+</div>
+
 <script src="shared.js"></script>
 <script>
 checkLogin();
@@ -244,6 +299,87 @@ function loadAudit() {
         });
     });
 }
+
+function openCronDialog() {
+    document.getElementById('cronModal').style.display = 'flex';
+    loadCronJobs();
+}
+
+function loadCronJobs() {
+    fetch("https://tcs-manager-backend.onrender.com/api/cron-jobs", {
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    })
+    .then(r => r.json())
+    .then(jobs => {
+        const tbody = document.querySelector('#cron-table tbody');
+        tbody.innerHTML = '';
+        jobs.forEach(job => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${job.name}</td><td>${job.type}</td><td>${job.cron_expression}</td>
+            <td>${job.recipients}</td><td>${job.active ? "Ja" : "Nein"}</td>
+            <td><button onclick='editCronJob(${JSON.stringify(job)})'>Bearbeiten</button> 
+                <button onclick='deleteCronJob(${job.id})'>Löschen</button></td>`;
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+function createCronJob() {
+    document.getElementById('editCronTitle').innerText = "Neuen CRON Job anlegen";
+    document.getElementById('cron-id').value = '';
+    document.getElementById('cron-name').value = '';
+    document.getElementById('cron-type').value = 'wartung';
+    document.getElementById('cron-expression').value = '';
+    document.getElementById('cron-recipients').value = '';
+    document.getElementById('cron-active').value = 'true';
+    document.getElementById('editCronModal').style.display = 'flex';
+}
+
+function editCronJob(job) {
+    document.getElementById('editCronTitle').innerText = "CRON Job bearbeiten";
+    document.getElementById('cron-id').value = job.id;
+    document.getElementById('cron-name').value = job.name;
+    document.getElementById('cron-type').value = job.type;
+    document.getElementById('cron-expression').value = job.cron_expression;
+    document.getElementById('cron-recipients').value = job.recipients;
+    document.getElementById('cron-active').value = job.active ? 'true' : 'false';
+    document.getElementById('editCronModal').style.display = 'flex';
+}
+
+document.getElementById('cron-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('cron-id').value;
+    const job = {
+        name: document.getElementById('cron-name').value,
+        type: document.getElementById('cron-type').value,
+        cron_expression: document.getElementById('cron-expression').value,
+        recipients: document.getElementById('cron-recipients').value,
+        active: document.getElementById('cron-active').value === "true"
+    };
+
+    const url = "https://tcs-manager-backend.onrender.com/api/cron-jobs" + (id ? "/" + id : "");
+    const method = id ? "PUT" : "POST";
+
+    await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
+        body: JSON.stringify(job)
+    });
+
+    closeModal('editCronModal');
+    loadCronJobs();
+});
+
+function deleteCronJob(id) {
+    if (!confirm("Sicher löschen?")) return;
+    fetch("https://tcs-manager-backend.onrender.com/api/cron-jobs/" + id, {
+        method: "DELETE",
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    }).then(() => loadCronJobs());
+}
+
+
 </script>
 
 </body>
