@@ -1,260 +1,223 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Benutzerverwaltung</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.card-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 20px; }
+.card { background: #f2f2f2; padding: 20px; border-radius: 10px; width: 300px; text-align: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
+.card:hover { transform: translateY(-5px); background-color: #e9e9e9; }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 999; }
+.modal-content { background: #fff; padding: 20px; border-radius: 10px; max-height: 90%; overflow-y: auto; position: relative; width: 95%; max-width: 800px; }
+.close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; color: #888; }
+.close:hover { color: #000; }
+.alert { background-color: #4CAF50; color: white; padding: 10px; margin-top: 10px; border-radius: 5px; display: none; text-align: center; }
+@media (max-width: 600px) {
+    .card { width: 90%; }
+}
+</style>
 </head>
 <body>
 
 <header>
     <div class="header-container">
-        <img src="Logo.png" alt="Vereinslogo" class="logo">
-        <h1>TC Simbach</h1>
+        <h1>TC Simbach - Admin Dashboard</h1>
     </div>
-    <div class="burger" onclick="toggleMenu()">☰</div>
-  
-  <nav id="main-nav">
-    <a href="index.html">Start</a>
-	<a href="verleih.html">Verleih</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="admin.html">Admin</a>
-  </nav>
+    <nav id="main-nav">
+        <a href="index.html">Start</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 </header>
 
 <main>
-    <h2>Benutzerliste</h2>
-
-    <button onclick="openAddUserModal()">➕ Neuen Benutzer hinzufügen</button>
-
-    <table id="user-table">
-        <thead>
-            <tr>
-                <th>Benutzername</th>
-                <th>Email</th>
-                <th>Rolle</th>
-                <th>Status</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <div class="user-cards"></div>
+    <h2>Admin Übersicht</h2>
+    <div class="card-container">
+        <div class="card" onclick="openUserDialog()">
+            <h3>Benutzerverwaltung</h3>
+            <p id="user-stats">Lade...</p>
+        </div>
+        <div class="card" onclick="openAuditDialog()">
+            <h3>Verleihhistorie</h3>
+            <p>Alle Aktionen im Überblick</p>
+        </div>
+    </div>
 </main>
 
-<div id="user-info" style="text-align: center; padding: 10px;"></div>
+<div id="alert" class="alert"></div>
 
-<!-- Benutzer Modal -->
+<!-- Benutzer Dialog -->
 <div class="modal" id="userModal">
     <div class="modal-content">
-        <h2 id="modal-title">Benutzer bearbeiten</h2>
-        <form id="user-form">
-            <input type="hidden" id="u-id">
-            <label>Benutzername:</label><input type="text" id="u-username" required><br>
-            <div id="password-row">
-                <label>Passwort:</label><input type="password" id="u-password"><br>
-            </div>
-            <label>Email:</label><input type="email" id="u-email" required><br>
-            <label>Rolle:</label>
-            <select id="u-role" required>
-                <option value="administrator">Administrator</option>
-                <option value="basisdienst">Basisdienst</option>
-                <option value="vorstand">Vorstand</option>
-            </select><br><br>
+        <span class="close" onclick="closeModal('userModal')">X</span>
+        <h3>Benutzerübersicht</h3>
+        <table id="user-table"><thead><tr><th>Benutzername</th><th>Email</th><th>Rolle</th><th>Status</th><th>Aktionen</th></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+
+<!-- Benutzer Bearbeiten Dialog -->
+<div class="modal" id="editUserModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editUserModal')">X</span>
+        <h3>Benutzer bearbeiten</h3>
+        <form id="edit-user-form">
+            <input type="hidden" id="edit-user-id">
+            <label>Benutzername:<input type="text" id="edit-username" required></label>
+            <label>Email:<input type="email" id="edit-email" required></label>
+            <label>Rolle:<select id="edit-role"><option>benutzer</option><option>ausbilder</option><option>administrator</option></select></label>
+            <label>Status:<select id="edit-status"><option value="true">Aktiv</option><option value="false">Gesperrt</option></select></label>
             <button type="submit">Speichern</button>
-            <button type="button" onclick="closeUserModal()">Abbrechen</button>
+            <button type="button" onclick="resetPassword()">Passwort zurücksetzen</button>
         </form>
     </div>
 </div>
 
-<!-- Passwort Reset Modal -->
-<div class="modal" id="passwordModal">
+<!-- Audit Log Dialog -->
+<div class="modal" id="auditModal">
     <div class="modal-content">
-        <h2>Passwort zurücksetzen</h2>
-        <form id="password-form">
-            <input type="hidden" id="p-id">
-            <label>Neues Passwort:</label><input type="password" id="p-password" required><br><br>
-            <button type="submit">Zurücksetzen</button>
-            <button type="button" onclick="closePasswordModal()">Abbrechen</button>
-        </form>
+        <span class="close" onclick="closeModal('auditModal')">X</span>
+        <h3>Verleihhistorie (Audit Log)</h3>
+        <label>Von <input type="date" id="audit-from"></label>
+        <label>Bis <input type="date" id="audit-to"></label>
+        <button onclick="loadAudit()">Filtern</button>
+        <table id="audit-table"><thead><tr><th>Benutzer</th><th>Equipment</th><th>Aktion</th><th>Zeitpunkt</th><th>Fällig</th><th>Rückgabe</th></tr></thead><tbody></tbody></table>
     </div>
 </div>
 
 <script src="shared.js"></script>
 <script>
 checkLogin();
+const apiUsers = "https://tcs-manager-backend.onrender.com/api/users";
+const apiAudit = "https://tcs-manager-backend.onrender.com/api/equipment-log";
+const apiMembers = "https://tcs-manager-backend.onrender.com/api/members";
+const apiEquipment = "https://tcs-manager-backend.onrender.com/api/equipment";
 
-const user = getUserInfo();
+let members = [], equipment = [], currentUser = null;
 
-if (!user || user.role !== "administrator") {
-    document.body.innerHTML = `
-        <div style="text-align:center; padding: 50px;">
-            <h1>Zugriff verweigert</h1>
-            <p>Du hast mit deiner aktuellen Benutzerrolle keinen Zugriff auf den Adminbereich.<br>
-            Nur Administratoren können diese Seite nutzen.</p>
-            <button onclick="window.location.href='index.html'">Zurück zur Startseite</button>
-        </div>
-    `;
-    throw new Error("Zugriff verweigert - keine Berechtigung");
+function showAlert(msg) {
+    const alert = document.getElementById('alert');
+    alert.innerText = msg;
+    alert.style.display = 'block';
+    setTimeout(() => alert.style.display = 'none', 3000);
 }
 
-if (user) {
-    document.getElementById('user-info').innerHTML = `
-        Angemeldet als <strong>${user.username}</strong> (${formatRole(user.role)})
-        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-    `;
+function openUserDialog() {
+    document.getElementById('userModal').style.display = 'flex';
+    loadUsers();
 }
 
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
+function openAuditDialog() {
+    document.getElementById('auditModal').style.display = 'flex';
+    loadAudit();
 }
 
-function toggleMenu() {
-    document.getElementById('main-nav').classList.toggle('show');
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
 }
 
-const apiUsers = 'https://tcs-manager-backend.onrender.com/api/users';
-const apiResetPassword = 'https://tcs-manager-backend.onrender.com/api/reset-password';
-
-function formatRole(role) {
-    const map = {
-        administrator: "Administrator",
-        basisdienst: "Basisdienst",
-        vorstand: "Vorstand"
-    };
-    return map[role] || role;
-}
+document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    }
+});
 
 function loadUsers() {
-    fetch(apiUsers, {
-        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
-    })
-    .then(res => res.json())
-    .then(data => renderUsersTable(data));
-}
-
-function renderUsersTable(data) {
-    const tbody = document.querySelector('#user-table tbody');
-    const cardsContainer = document.querySelector('.user-cards');
-    tbody.innerHTML = '';
-    cardsContainer.innerHTML = '';
-
-    data.forEach(user => {
-        // Tabellenansicht
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${user.username}</td>
-            <td>${user.email}</td>
-            <td>${formatRole(user.role)}</td>
-            <td>${user.status}</td>
-            <td>
-                <button onclick='editUser(${JSON.stringify(user)})'>Bearbeiten</button>
-                <button onclick='resetPassword(${user.id})'>Passwort</button>
-                <button onclick='toggleUserStatus(${user.id}, "${user.status}")'>${user.status === "Aktiv" ? "Sperren" : "Aktivieren"}</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-
-        // Kartenansicht
-        const card = document.createElement('div');
-        card.className = "user-card";
-        card.innerHTML = `
-            <h3>${user.username}</h3>
-            <p>Email: ${user.email}</p>
-            <p>Rolle: ${formatRole(user.role)}</p>
-            <p>Status: ${user.status}</p>
-            <button onclick='editUser(${JSON.stringify(user)})'>Bearbeiten</button>
-            <button onclick='resetPassword(${user.id})'>Passwort</button>
-            <button onclick='toggleUserStatus(${user.id}, "${user.status}")'>${user.status === "Aktiv" ? "Sperren" : "Aktivieren"}</button>
-        `;
-        cardsContainer.appendChild(card);
+    fetch(apiUsers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } })
+    .then(r => r.json())
+    .then(users => {
+        const tbody = document.querySelector('#user-table tbody');
+        tbody.innerHTML = '';
+        let active = 0, blocked = 0;
+        users.forEach(u => {
+            if (u.active) active++; else blocked++;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${u.username}</td><td>${u.email}</td><td>${u.role}</td><td>${u.active ? "Aktiv" : "Gesperrt"}</td>
+            <td><button onclick='editUser(${JSON.stringify(u)})'>Bearbeiten</button></td>`;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('user-stats').innerText = `${active} aktiv / ${blocked} gesperrt`;
     });
 }
 
-function openAddUserModal() {
-    document.getElementById('modal-title').innerText = "Neuen Benutzer hinzufügen";
-    document.getElementById('user-form').reset();
-    document.getElementById('u-id').value = '';
-    document.getElementById('password-row').style.display = 'block';
-    document.getElementById('userModal').style.display = 'flex';
-}
-
 function editUser(user) {
-    document.getElementById('modal-title').innerText = "Benutzer bearbeiten";
-    document.getElementById('u-id').value = user.id;
-    document.getElementById('u-username').value = user.username;
-    document.getElementById('u-email').value = user.email;
-    document.getElementById('u-role').value = user.role;
-    document.getElementById('password-row').style.display = 'none';
-    document.getElementById('userModal').style.display = 'flex';
+    currentUser = user;
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-username').value = user.username;
+    document.getElementById('edit-email').value = user.email;
+    document.getElementById('edit-role').value = user.role;
+    document.getElementById('edit-status').value = user.active;
+    document.getElementById('editUserModal').style.display = 'flex';
 }
 
-function closeUserModal() {
-    document.getElementById('userModal').style.display = 'none';
-}
-
-function closePasswordModal() {
-    document.getElementById('passwordModal').style.display = 'none';
-}
-
-document.getElementById('user-form').addEventListener('submit', (e) => {
+document.getElementById('edit-user-form').addEventListener('submit', (e) => {
     e.preventDefault();
-
+    const id = document.getElementById('edit-user-id').value;
     const user = {
-        username: document.getElementById('u-username').value,
-        email: document.getElementById('u-email').value,
-        role: document.getElementById('u-role').value
+        username: document.getElementById('edit-username').value,
+        email: document.getElementById('edit-email').value,
+        role: document.getElementById('edit-role').value,
+        active: document.getElementById('edit-status').value === "true"
     };
 
-    const password = document.getElementById('u-password').value;
-    if (password) {
-        user.password = password;
-    }
-
-    const id = document.getElementById('u-id').value;
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `${apiUsers}/${id}` : apiUsers;
-
-    fetch(url, {
-        method,
+    fetch(apiUsers + "/" + id, {
+        method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
         body: JSON.stringify(user)
     }).then(() => {
-        closeUserModal();
+        closeModal('editUserModal');
+        showAlert("Benutzer gespeichert.");
         loadUsers();
     });
 });
 
-function resetPassword(userId) {
-    const password = prompt("Neues Passwort eingeben:");
-    if (!password) return;
-
-    fetch(apiResetPassword, {
+function resetPassword() {
+    const id = document.getElementById('edit-user-id').value;
+    const newPassword = prompt("Neues Passwort eingeben:");
+    if (!newPassword) return;
+    fetch("https://tcs-manager-backend.onrender.com/api/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
-        body: JSON.stringify({ id: userId, password })
-    }).then(() => {
-        alert("Passwort wurde zurückgesetzt");
-    });
+        body: JSON.stringify({ id, password: newPassword })
+    }).then(() => showAlert("Passwort wurde geändert."));
 }
 
-function toggleUserStatus(userId, currentStatus) {
-    const newStatus = currentStatus === "Aktiv" ? "Gesperrt" : "Aktiv";
+function loadAudit() {
+    const from = document.getElementById("audit-from").value;
+    const to = document.getElementById("audit-to").value;
+    let url = apiAudit;
+    const params = [];
+    if (from) params.push("from=" + from);
+    if (to) params.push("to=" + to);
+    if (params.length > 0) url += "?" + params.join("&");
 
-    fetch(`${apiUsers}/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
-        body: JSON.stringify({ status: newStatus })
-    }).then(() => {
-        loadUsers();
+    Promise.all([
+        fetch(url, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json()),
+        fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json()),
+        fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json())
+    ]).then(([logs, m, e]) => {
+        members = m;
+        equipment = e;
+
+        logs.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const tbody = document.querySelector('#audit-table tbody');
+        tbody.innerHTML = '';
+        logs.forEach(log => {
+            const member = members.find(m => m.id == log.user_id);
+            const eq = equipment.find(eq => eq.id == log.equipment_id);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${member ? member.vorname + ' ' + member.name : log.user_id}</td>
+            <td>${eq ? eq.name : log.equipment_id}</td>
+            <td>${log.action}</td><td>${log.timestamp}</td>
+            <td>${log.due_date || '-'}</td><td>${log.returned_date || '-'}</td>`;
+            tbody.appendChild(tr);
+        });
     });
 }
-
-document.addEventListener('DOMContentLoaded', loadUsers);
 </script>
 
 </body>
