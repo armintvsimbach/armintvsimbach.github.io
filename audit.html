@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audit Log</title>
+    <script src="shared.js"></script>
+</head>
+<body onload="loadAuditLog()">
+    <h1>Audit Log (Verleih und Rückgabe)</h1>
+    <label>Zeitraum von: <input type="date" id="from"></label>
+    <label>bis: <input type="date" id="to"></label>
+    <button onclick="loadAuditLog()">Filtern</button>
+    <table border="1" id="logTable">
+        <tr><th>Benutzer</th><th>Equipment</th><th>Aktion</th><th>Zeitpunkt</th><th>Fällig</th><th>Rückgabe</th></tr>
+    </table>
+
+<script>
+function loadAuditLog() {
+    checkLogin();
+
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    let url = "https://tcs-manager-backend.onrender.com/api/equipment-log";
+
+    const params = [];
+    if (from) params.push("from=" + from);
+    if (to) params.push("to=" + to);
+    if (params.length > 0) url += "?" + params.join("&");
+
+    authorizedFetch(url).then(res => res.json()).then(data => {
+        const table = document.getElementById("logTable");
+        table.innerHTML = '<tr><th>Benutzer</th><th>Equipment</th><th>Aktion</th><th>Zeitpunkt</th><th>Fällig</th><th>Rückgabe</th></tr>';
+        
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = "<td>" + row.user_id + "</td>" +
+                           "<td>" + row.equipment_id + "</td>" +
+                           "<td>" + row.action + "</td>" +
+                           "<td>" + row.timestamp + "</td>" +
+                           "<td>" + (row.due_date || "-") + "</td>" +
+                           "<td>" + (row.returned_date || "-") + "</td>";
+            table.appendChild(tr);
+        });
+    });
+}
+</script>
+</body>
+</html>

@@ -223,10 +223,22 @@ async function confirmReturn(rental) {
 
     if (confirmed) {
         await fetch(`${apiRentals}/${rental.id}/return`, { method: 'PUT' });
+
+        // Audit Log Rückgabe
+        await authorizedFetch("https://tcs-manager-backend.onrender.com/api/equipment-log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                equipment_id: rental.equipment_id,
+                action: "rueckgabe"
+            })
+        });
+
         await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
         renderRentalTable();
     }
 }
+
 
 function setClearButton(inputElement, hiddenInput) {
     const wrapper = inputElement.parentNode;
@@ -330,16 +342,32 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
         rental_date: document.getElementById('r-date').value,
     };
 
+    // Verleih speichern
     await fetch(apiRentals, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rental)
     });
 
+    // Audit Trail - Verleihaktion speichern
+    const dueDate = new Date(rental.rental_date);
+    dueDate.setDate(dueDate.getDate() + 14); // 2 Wochen später
+
+    await authorizedFetch("https://tcs-manager-backend.onrender.com/api/equipment-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            equipment_id: rental.equipment_id,
+            action: "verleih",
+            due_date: dueDate.toISOString().split('T')[0]
+        })
+    });
+
     closeRentalModal();
     await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
     renderRentalTable();
 });
+
 
 document.addEventListener('DOMContentLoaded', () => {
     Promise.all([
