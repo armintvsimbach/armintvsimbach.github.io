@@ -317,11 +317,25 @@ function loadCronJobs() {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${job.name}</td><td>${job.type}</td><td>${job.cron_expression}</td>
             <td>${job.recipients}</td><td>${job.active ? "Ja" : "Nein"}</td>
-            <td><button onclick='editCronJob(${JSON.stringify(job)})'>Bearbeiten</button> 
-                <button onclick='deleteCronJob(${job.id})'>Löschen</button></td>`;
+            <td>
+                <button onclick='editCronJob(${JSON.stringify(job)})'>Bearbeiten</button> 
+                <button onclick='deleteCronJob(${job.id})'>Löschen</button>
+                <button onclick='runCronJobNow(${job.id})'>Jetzt Ausführen</button>
+            </td>`;
             tbody.appendChild(tr);
         });
     });
+}
+
+function runCronJobNow(id) {
+    if (!confirm("CRON Job jetzt sofort ausführen?")) return;
+
+    fetch("https://tcs-manager-backend.onrender.com/api/cron-jobs/" + id + "/run", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    })
+    .then(() => alert("CRON Job wurde ausgeführt!"))
+    .catch(() => alert("Fehler beim Ausführen des CRON Jobs."));
 }
 
 function createCronJob() {
