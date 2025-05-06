@@ -6,19 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Dashboard</title>
 <link rel="stylesheet" href="style.css">
-<style>
-.card-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin: 20px; }
-.card { background: #f2f2f2; padding: 20px; border-radius: 10px; width: 300px; text-align: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
-.card:hover { transform: translateY(-5px); background-color: #e9e9e9; }
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 999; }
-.modal-content { background: #fff; padding: 20px; border-radius: 10px; max-height: 90%; overflow-y: auto; position: relative; width: 95%; max-width: 800px; }
-.close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; color: #888; }
-.close:hover { color: #000; }
-.alert { background-color: #4CAF50; color: white; padding: 10px; margin-top: 10px; border-radius: 5px; display: none; text-align: center; }
-@media (max-width: 600px) {
-    .card { width: 90%; }
-}
-</style>
 </head>
 <body>
 
@@ -56,23 +43,25 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('userModal')">X</span>
         <h3>Benutzerübersicht</h3>
-        <table id="user-table"><thead><tr><th>Benutzername</th><th>Email</th><th>Rolle</th><th>Status</th><th>Aktionen</th></tr></thead><tbody></tbody></table>
+        <button id="new-user-btn" onclick="createUser()">➕ Neuen Benutzer anlegen</button>
+        <div class="table-wrapper"><table id="user-table"><thead><tr><th>Benutzername</th><th>Email</th><th>Rolle</th><th>Status</th><th>Aktionen</th></tr></thead><tbody></tbody></table></div>
+        <div class="user-cards"></div>
     </div>
 </div>
 
-<!-- Benutzer Bearbeiten Dialog -->
+<!-- Benutzer Bearbeiten / Erstellen Dialog -->
 <div class="modal" id="editUserModal">
     <div class="modal-content">
         <span class="close" onclick="closeModal('editUserModal')">X</span>
-        <h3>Benutzer bearbeiten</h3>
+        <h3 id="editUserTitle">Benutzer bearbeiten</h3>
         <form id="edit-user-form">
             <input type="hidden" id="edit-user-id">
             <label>Benutzername:<input type="text" id="edit-username" required></label>
             <label>Email:<input type="email" id="edit-email" required></label>
             <label>Rolle:<select id="edit-role"><option>benutzer</option><option>ausbilder</option><option>administrator</option></select></label>
             <label>Status:<select id="edit-status"><option value="true">Aktiv</option><option value="false">Gesperrt</option></select></label>
+            <label id="password-field" style="display:none;">Passwort:<input type="text" id="edit-password"></label>
             <button type="submit">Speichern</button>
-            <button type="button" onclick="resetPassword()">Passwort zurücksetzen</button>
         </form>
     </div>
 </div>
@@ -85,7 +74,7 @@
         <label>Von <input type="date" id="audit-from"></label>
         <label>Bis <input type="date" id="audit-to"></label>
         <button onclick="loadAudit()">Filtern</button>
-        <table id="audit-table"><thead><tr><th>Benutzer</th><th>Equipment</th><th>Aktion</th><th>Zeitpunkt</th><th>Fällig</th><th>Rückgabe</th></tr></thead><tbody></tbody></table>
+        <div class="table-wrapper"><table id="audit-table"><thead><tr><th>Benutzer</th><th>Equipment</th><th>Aktion</th><th>Zeitpunkt</th><th>Fällig</th><th>Rückgabe</th></tr></thead><tbody></tbody></table></div>
     </div>
 </div>
 
@@ -99,7 +88,6 @@ const apiEquipment = "https://tcs-manager-backend.onrender.com/api/equipment";
 
 let members = [], equipment = [], currentUser = null;
 
-// Direkt beim Start Benutzerstatistik laden
 document.addEventListener("DOMContentLoaded", () => {
     loadUserStats();
 });
@@ -146,7 +134,10 @@ function loadUsers() {
     .then(r => r.json())
     .then(users => {
         const tbody = document.querySelector('#user-table tbody');
+        const cardsContainer = document.querySelector('.user-cards');
         tbody.innerHTML = '';
+        cardsContainer.innerHTML = '';
+
         let active = 0, blocked = 0;
         users.forEach(u => {
             if (u.active) active++; else blocked++;
@@ -154,18 +145,40 @@ function loadUsers() {
             tr.innerHTML = `<td>${u.username}</td><td>${u.email}</td><td>${u.role}</td><td>${u.active ? "Aktiv" : "Gesperrt"}</td>
             <td><button onclick='editUser(${JSON.stringify(u)})'>Bearbeiten</button></td>`;
             tbody.appendChild(tr);
+
+            const card = document.createElement('div');
+            card.className = "user-card";
+            card.innerHTML = `<h3>${u.username}</h3><p><strong>Email:</strong> ${u.email}</p><p><strong>Rolle:</strong> ${u.role}</p>
+            <p><strong>Status:</strong> ${u.active ? "Aktiv" : "Gesperrt"}</p><button onclick='editUser(${JSON.stringify(u)})'>Bearbeiten</button>`;
+            cardsContainer.appendChild(card);
         });
+
         document.getElementById('user-stats').innerText = `${active} aktiv / ${blocked} gesperrt`;
     });
 }
 
 function editUser(user) {
     currentUser = user;
+    document.getElementById('editUserTitle').innerText = "Benutzer bearbeiten";
     document.getElementById('edit-user-id').value = user.id;
     document.getElementById('edit-username').value = user.username;
     document.getElementById('edit-email').value = user.email;
     document.getElementById('edit-role').value = user.role;
     document.getElementById('edit-status').value = user.active;
+    document.getElementById('password-field').style.display = "none";
+    document.getElementById('editUserModal').style.display = 'flex';
+}
+
+function createUser() {
+    currentUser = null;
+    document.getElementById('editUserTitle').innerText = "Neuen Benutzer anlegen";
+    document.getElementById('edit-user-id').value = '';
+    document.getElementById('edit-username').value = '';
+    document.getElementById('edit-email').value = '';
+    document.getElementById('edit-role').value = 'benutzer';
+    document.getElementById('edit-status').value = 'true';
+    document.getElementById('password-field').style.display = "block";
+    document.getElementById('edit-password').value = '';
     document.getElementById('editUserModal').style.display = 'flex';
 }
 
@@ -178,28 +191,21 @@ document.getElementById('edit-user-form').addEventListener('submit', (e) => {
         role: document.getElementById('edit-role').value,
         active: document.getElementById('edit-status').value === "true"
     };
+    const password = document.getElementById('edit-password').value;
 
-    fetch(apiUsers + "/" + id, {
-        method: "PUT",
+    if (!id && !password) return alert("Passwort für neuen Benutzer eingeben!");
+    if (!id) user.password = password;
+
+    fetch(apiUsers + (id ? "/" + id : ""), {
+        method: id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
         body: JSON.stringify(user)
     }).then(() => {
         closeModal('editUserModal');
-        showAlert("Benutzer gespeichert.");
+        showAlert(id ? "Benutzer gespeichert." : "Neuer Benutzer angelegt.");
         loadUsers();
     });
 });
-
-function resetPassword() {
-    const id = document.getElementById('edit-user-id').value;
-    const newPassword = prompt("Neues Passwort eingeben:");
-    if (!newPassword) return;
-    fetch("https://tcs-manager-backend.onrender.com/api/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
-        body: JSON.stringify({ id, password: newPassword })
-    }).then(() => showAlert("Passwort wurde geändert."));
-}
 
 function loadAudit() {
     const from = document.getElementById("audit-from").value;
