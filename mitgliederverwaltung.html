@@ -85,10 +85,8 @@
 let membersData = [];
 
 function fetchMembers() {
-    fetch("https://tcs-manager-backend.onrender.com/api/members", {
-        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
-    })
-    .then(res => res.json())
+    apiFetch("https://tcs-manager-backend.onrender.com/api/members")
+    
     .then(data => {
         membersData = data;
         renderMembersTable(membersData);
@@ -224,6 +222,7 @@ document.addEventListener('DOMContentLoaded', fetchMembers);
 
 // Benutzerinfo + Logout
 checkLogin();
+setupTokenExpiryWatcher();
 const user = getUserInfo();
 if (user) {
     document.getElementById('user-info').innerHTML = `

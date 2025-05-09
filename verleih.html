@@ -91,6 +91,7 @@
 <script src="shared.js"></script>
 <script>
 checkLogin();
+setupTokenExpiryWatcher();
 
 const user = getUserInfo();
 if (user) {
@@ -138,24 +139,22 @@ const api = {
 
 let members = [], equipmentList = [], allEquipmentList = [], rentals = [];
 
-function fetchWithAuth(url) {
-    return fetch(url, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json());
-}
+
 
 async function loadActiveMembers() {
-    members = await fetchWithAuth(api.members).then(data => data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
+    members = await apiFetch(api.members).then(data => data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
 }
 
 async function loadAvailableEquipment() {
-    equipmentList = await fetchWithAuth(api.equipment).then(data => data.filter(e => e.status === "Aktiv" && !e.verliehen));
+    equipmentList = await apiFetch(api.equipment).then(data => data.filter(e => e.status === "Aktiv" && !e.verliehen));
 }
 
 async function loadAllEquipment() {
-    allEquipmentList = await fetchWithAuth(api.equipment);
+    allEquipmentList = await apiFetch(api.equipment);
 }
 
 async function loadRentals() {
-    rentals = await fetchWithAuth(api.rentals);
+    rentals = await apiFetch(api.rentals);
     renderRentalTable();
 }
 
@@ -209,7 +208,7 @@ Mitglied: ${rental.member_id}
 Equipment: ${rental.equipment_id}
 Datum: ${today}`)) return;
 
-    await fetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT', headers: { "Authorization": "Bearer " + localStorage.getItem("token") } });
+    await apiFetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT' });
 
     await loadAvailableEquipment();
     await loadRentals();
@@ -270,9 +269,9 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
         rental_date: document.getElementById('r-date').value,
     };
 
-    const response = await fetch(api.rentals, {
+    const response = await apiFetch(api.rentals, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rental)
     });
 

@@ -15,13 +15,13 @@
     </div>
     <div class="burger" onclick="toggleMenu()">☰</div>
   
-  <nav id="main-nav">
-    <a href="index.html">Start</a>
-	<a href="verleih.html">Verleih</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="admin.html">Admin</a>
-  </nav>
+    <nav id="main-nav">
+        <a href="index.html">Start</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 </header>
 
 <main>
@@ -52,6 +52,7 @@
 <script src="shared.js"></script>
 <script>
 checkLogin();
+setupTokenExpiryWatcher();
 
 const user = getUserInfo();
 if (user) {
@@ -76,10 +77,10 @@ const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
 
 function loadDashboard() {
     Promise.all([
-        fetch(apiMembers, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(res => res.json()),
-        fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(res => res.json())
-    ]).then(([members, equipment]) => {
-
+        apiFetch(apiMembers),
+        apiFetch(apiEquipment)
+    ])
+    .then(([members, equipment]) => {
         // Mitglieder zählen
         const activeMembers = members.filter(m => m.status === "aktiv").length;
         const inactiveMembers = members.filter(m => m.status !== "aktiv").length;
@@ -99,12 +100,13 @@ function loadDashboard() {
         document.getElementById('inactive-members').innerText = inactiveMembers;
         document.getElementById('invalid-ttu').innerText = invalidTTU;
         document.getElementById('overdue-maintenance').innerText = overdueMaintenance;
+    })
+    .catch(error => {
+        console.error("Fehler beim Laden:", error);
     });
 }
 
 document.addEventListener('DOMContentLoaded', loadDashboard);
-
-
 </script>
 
 </body>

@@ -17,7 +17,7 @@
   
   <nav id="main-nav">
     <a href="index.html">Start</a>
-	<a href="verleih.html">Verleih</a>
+    <a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
     <a href="equipment.html">Equipmentverwaltung</a>
     <a href="admin.html">Admin</a>
@@ -95,6 +95,7 @@ let equipmentData = [];
 let categories = [];
 
 checkLoginAndLoad();
+setupTokenExpiryWatcher();
 
 function checkLoginAndLoad() {
   checkLogin();
@@ -116,12 +117,14 @@ function toggleMenu() {
 
 function loadData() {
   Promise.all([
-    fetch(apiEquipment, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json()),
-    fetch(apiCategories, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json())
+    apiFetch(apiEquipment),
+    apiFetch(apiCategories)
   ]).then(([equipment, cats]) => {
     equipmentData = equipment;
     categories = cats;
     renderEquipmentTable(equipment);
+  }).catch(error => {
+    console.error("Fehler beim Laden:", error);
   });
 }
 
@@ -255,9 +258,9 @@ document.getElementById('equipment-form').addEventListener('submit', async (e) =
   const url = id ? `${apiEquipment}/${id}` : apiEquipment;
   const method = id ? 'PUT' : 'POST';
 
-  await fetch(url, {
+  await apiFetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(eq)
   });
 
