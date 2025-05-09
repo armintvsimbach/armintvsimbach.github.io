@@ -35,6 +35,10 @@
             <h3>Verleihhistorie</h3>
             <p>Alle Aktionen im Überblick</p>
         </div>
+		<div class="card" onclick="openStatistikDialog()">
+			<h3>Verleihstatistik</h3>
+			<p>Verleihstatistik 12 Monate</p>
+		</div>
         <div class="card" onclick="openCronDialog()">
             <h3>CRON Jobs</h3>
             <p>Geplante Aufgaben verwalten</p>
@@ -83,6 +87,24 @@
         <div class="table-wrapper"><table id="audit-table"><thead><tr><th>Benutzer</th><th>Equipment</th><th>Aktion</th><th>Zeitpunkt</th><th>Fällig</th><th>Rückgabe</th></tr></thead><tbody></tbody></table></div>
     </div>
 </div>
+
+<!-- Verleihstatistik Dialog -->
+<div class="modal" id="statistikModal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('statistikModal')">X</span>
+        <h3>Verleihstatistik (letzte 12 Monate)</h3>
+        <button onclick="downloadStatistikExcel()">📥 Als Excel herunterladen</button>
+        <div class="table-wrapper">
+            <table id="statistik-table">
+                <thead>
+                    <tr><th>Equipment</th><th>Anzahl Verleihungen</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 
 <!-- CRON JOB Dialog -->
 <div class="modal" id="cronModal">
@@ -134,6 +156,7 @@
 </div>
 
 <script src="shared.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 checkLogin();
 setupTokenExpiryWatcher();
@@ -300,6 +323,38 @@ function loadAudit() {
         });
     });
 }
+
+function openStatistikDialog() {
+    document.getElementById('statistikModal').style.display = 'flex';
+    loadStatistik();
+}
+
+function loadStatistik() {
+    fetch("https://tcs-manager-backend.onrender.com/api/verleih-statistik", {
+        headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.querySelector("#statistik-table tbody");
+        tbody.innerHTML = "";
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${row.equipment_name}</td><td>${row.count}</td>`;
+            tbody.appendChild(tr);
+        });
+        // Für Excel Export zwischenspeichern
+        window._statistikData = data;
+    });
+}
+
+function downloadStatistikExcel() {
+    const ws = XLSX.utils.json_to_sheet(window._statistikData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Verleihstatistik");
+    XLSX.writeFile(wb, "verleihstatistik.xlsx");
+}
+
+
 
 function openCronDialog() {
     document.getElementById('cronModal').style.display = 'flex';
