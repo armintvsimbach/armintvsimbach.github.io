@@ -139,22 +139,24 @@ const api = {
 
 let members = [], equipmentList = [], allEquipmentList = [], rentals = [];
 
-
+function fetchWithAuth(url) {
+    return fetch(url, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json());
+}
 
 async function loadActiveMembers() {
-    members = await apiFetch(api.members).then(data => data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
+    members = await fetchWithAuth(api.members).then(data => data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
 }
 
 async function loadAvailableEquipment() {
-    equipmentList = await apiFetch(api.equipment).then(data => data.filter(e => e.status === "Aktiv" && !e.verliehen));
+    equipmentList = await fetchWithAuth(api.equipment).then(data => data.filter(e => e.status === "Aktiv" && !e.verliehen));
 }
 
 async function loadAllEquipment() {
-    allEquipmentList = await apiFetch(api.equipment);
+    allEquipmentList = await fetchWithAuth(api.equipment);
 }
 
 async function loadRentals() {
-    rentals = await apiFetch(api.rentals);
+    rentals = await fetchWithAuth(api.rentals);
     renderRentalTable();
 }
 
@@ -208,7 +210,7 @@ Mitglied: ${rental.member_id}
 Equipment: ${rental.equipment_id}
 Datum: ${today}`)) return;
 
-    await apiFetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT' });
+    await fetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT', headers: { "Authorization": "Bearer " + localStorage.getItem("token") } });
 
     await loadAvailableEquipment();
     await loadRentals();
@@ -269,9 +271,9 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
         rental_date: document.getElementById('r-date').value,
     };
 
-    const response = await apiFetch(api.rentals, {
+    const response = await fetch(api.rentals, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
         body: JSON.stringify(rental)
     });
 
