@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -15,14 +14,14 @@
         <h1>TC Simbach</h1>
     </div>
     <div class="burger" onclick="toggleMenu()">☰</div>
-  
-  <nav id="main-nav">
-    <a href="index.html">Start</a>
-	<a href="verleih.html">Verleih</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="admin.html">Admin</a>
-  </nav>
+
+    <nav id="main-nav">
+        <a href="index.html">Start</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 </header>
 
 <main>
@@ -118,7 +117,7 @@ function openAddRentalModal() {
     document.getElementById('rentalModal').style.display = 'flex';
     resetInput('r-member-search', 'r-member-id');
     resetInput('r-equipment-search', 'r-equipment-id');
-    setupAutocomplete(); // <<<<<<<< NEU hinzugefügt, jetzt wird es IMMER aktiv
+    setupAutocomplete();
 }
 
 function resetInput(inputId, hiddenId) {
@@ -137,22 +136,27 @@ const api = {
     rentals: 'https://tcs-manager-backend.onrender.com/api/rentals'
 };
 
-let members = [], equipmentList = [], allEquipmentList = [];
+let members = [], equipmentList = [], allEquipmentList = [], rentals = [];
 
 function fetchWithAuth(url) {
     return fetch(url, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json());
 }
 
-function loadActiveMembers() {
-    return fetchWithAuth(api.members).then(data => members = data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
+async function loadActiveMembers() {
+    members = await fetchWithAuth(api.members).then(data => data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
 }
 
-function loadAvailableEquipment() {
-    return fetchWithAuth(api.equipment).then(data => equipmentList = data.filter(e => e.status === "Aktiv" && !e.verliehen));
+async function loadAvailableEquipment() {
+    equipmentList = await fetchWithAuth(api.equipment).then(data => data.filter(e => e.status === "Aktiv" && !e.verliehen));
 }
 
-function loadAllEquipment() {
-    return fetchWithAuth(api.equipment).then(data => allEquipmentList = data);
+async function loadAllEquipment() {
+    allEquipmentList = await fetchWithAuth(api.equipment);
+}
+
+async function loadRentals() {
+    rentals = await fetchWithAuth(api.rentals);
+    renderRentalTable();
 }
 
 function formatDate(dateString) {
@@ -161,8 +165,7 @@ function formatDate(dateString) {
     return date.toISOString().split('T')[0];
 }
 
-async function renderRentalTable() {
-    const rentals = await fetchWithAuth(api.rentals);
+function renderRentalTable() {
     const tbody = document.querySelector('#rental-table tbody');
     const cardsContainer = document.querySelector('.rental-cards');
     tbody.innerHTML = '';
@@ -208,8 +211,8 @@ Datum: ${today}`)) return;
 
     await fetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT', headers: { "Authorization": "Bearer " + localStorage.getItem("token") } });
 
-    await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
-    renderRentalTable();
+    await loadAvailableEquipment();
+    await loadRentals();
 }
 
 function setClearButton(inputElement, hiddenInput) {
@@ -267,20 +270,25 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
         rental_date: document.getElementById('r-date').value,
     };
 
-    await fetch(api.rentals, {
+    const response = await fetch(api.rentals, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
         body: JSON.stringify(rental)
     });
 
+    const newRental = await response.json();
     closeRentalModal();
-    await Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()]);
+
+    newRental.status = "Ausgeliehen";
+    rentals.unshift(newRental);
     renderRentalTable();
+
+    await loadAvailableEquipment();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
     Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()])
-        .then(() => renderRentalTable());
+        .then(() => loadRentals());
 });
 </script>
 
