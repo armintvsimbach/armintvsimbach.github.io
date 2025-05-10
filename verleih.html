@@ -37,7 +37,7 @@
                 <th>Mitglied</th>
                 <th>Equipment</th>
                 <th>Verleihdatum</th>
-                <th>Rückgabedatum</th>
+                <th>Fälligkeit</th>
                 <th>Status</th>
                 <th>Aktionen</th>
             </tr>
@@ -78,7 +78,11 @@
                 </tr>
                 <tr>
                     <td>Verleihdatum:</td>
-                    <td><input type="date" id="r-date" required></td>
+                    <td><input type="date" id="r-date" required onchange="updateDueDateField()"></td>
+                </tr>
+                <tr>
+                    <td>Rückgabe bis:</td>
+                    <td><input type="text" id="r-due-date" readonly style="background-color:#eee;"></td>
                 </tr>
             </table>
             <br>
@@ -114,7 +118,9 @@ function closeRentalModal() {
 function openAddRentalModal() {
     document.getElementById('rental-form').reset();
     document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
-    document.getElementById('r-date').value = new Date().toISOString().substr(0, 10);
+    const todayStr = new Date().toISOString().substr(0, 10);
+    document.getElementById('r-date').value = todayStr;
+    updateDueDateField();
     document.getElementById('rentalModal').style.display = 'flex';
     resetInput('r-member-search', 'r-member-id');
     resetInput('r-equipment-search', 'r-equipment-id');
@@ -160,9 +166,15 @@ async function loadRentals() {
     renderRentalTable();
 }
 
-function formatDate(dateString) {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
+function getDueDate(rentalDate) {
+    const date = new Date(rentalDate);
+    date.setDate(date.getDate() + 14);
+    return date;
+}
+
+function formatDate(dateStringOrDate) {
+    if (!dateStringOrDate) return '-';
+    const date = new Date(dateStringOrDate);
     return date.toISOString().split('T')[0];
 }
 
@@ -172,18 +184,26 @@ function renderRentalTable() {
     tbody.innerHTML = '';
     cardsContainer.innerHTML = '';
 
+    rentals.sort((a, b) => new Date(getDueDate(a.rental_date)) - new Date(getDueDate(b.rental_date)));
+
     rentals.forEach(rental => {
         const member = members.find(m => m.id == rental.member_id);
         const equipment = allEquipmentList.find(eq => eq.id == rental.equipment_id);
         const memberName = member ? `${member.vorname} ${member.name}` : rental.member_id;
         const equipmentName = equipment ? equipment.name : rental.equipment_id;
+        const dueDate = getDueDate(rental.rental_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         const tr = document.createElement('tr');
+        const dueDateFormatted = formatDate(dueDate);
+        const isOverdue = dueDate < today;
+
         tr.innerHTML = `
             <td>${memberName}</td>
             <td>${equipmentName}</td>
             <td>${formatDate(rental.rental_date)}</td>
-            <td>${formatDate(rental.return_date)}</td>
+            <td class="due-date" style="${isOverdue ? 'color: red; font-weight: bold;' : ''}">${dueDateFormatted}</td>
             <td>${rental.status}</td>
             <td><button onclick='confirmReturn(${JSON.stringify(rental)})'>🚪</button></td>
         `;
@@ -195,6 +215,7 @@ function renderRentalTable() {
             <h3>${memberName}</h3>
             <p><strong>Equipment:</strong> ${equipmentName}</p>
             <p><strong>Verleihdatum:</strong> ${formatDate(rental.rental_date)}</p>
+            <p><strong>Fälligkeit:</strong> <span style="${isOverdue ? 'color: red; font-weight: bold;' : ''}">${dueDateFormatted}</span></p>
             <p><strong>Status:</strong> ${rental.status}</p>
             <button onclick='confirmReturn(${JSON.stringify(rental)})'>🚪</button>
         `;
@@ -204,11 +225,7 @@ function renderRentalTable() {
 
 async function confirmReturn(rental) {
     const today = new Date().toISOString().split('T')[0];
-    if (!confirm(`Rückgabe bestätigen:
-
-Mitglied: ${rental.member_id}
-Equipment: ${rental.equipment_id}
-Datum: ${today}`)) return;
+    if (!confirm(`Rückgabe bestätigen:\n\nMitglied: ${rental.member_id}\nEquipment: ${rental.equipment_id}\nDatum: ${today}`)) return;
 
     await fetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT', headers: { "Authorization": "Bearer " + localStorage.getItem("token") } });
 
@@ -280,7 +297,6 @@ document.getElementById('rental-form').addEventListener('submit', async (e) => {
     const newRental = await response.json();
     closeRentalModal();
 
-    newRental.status = "Ausgeliehen";
     rentals.unshift(newRental);
     renderRentalTable();
 
@@ -291,7 +307,21 @@ document.addEventListener('DOMContentLoaded', () => {
     Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()])
         .then(() => loadRentals());
 });
-</script>
 
+function updateDueDateField() {
+    const dateInput = document.getElementById("r-date");
+    const dueField = document.getElementById("r-due-date");
+    if (!dateInput.value) {
+        dueField.value = "";
+        return;
+    }
+    const date = new Date(dateInput.value);
+    date.setDate(date.getDate() + 14);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    dueField.value = `${day}.${month}.${year}`;
+}
+</script>
 </body>
 </html>
