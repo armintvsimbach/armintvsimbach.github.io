@@ -70,7 +70,15 @@
                 <tr><td>Telefon:</td><td><input type="text" id="m-telefon"></td></tr>
                 <tr><td>Mobil:</td><td><input type="text" id="m-mobil"></td></tr>
                 <tr><td>Email:</td><td><input type="email" id="m-email"></td></tr>
-                <tr><td>Status:</td><td><input type="text" id="m-status"></td></tr>
+                <tr>
+				  <td>Status:</td>
+				  <td>
+					<select id="m-status">
+					  <option value="aktiv" selected>aktiv</option>
+					  <option value="inaktiv">inaktiv</option>
+					</select>
+				  </td>
+				</tr>
                 <tr><td>TTU Gültigkeit:</td><td><input type="date" id="m-ttu"></td></tr>
             </table>
             <input type="hidden" id="m-id">
