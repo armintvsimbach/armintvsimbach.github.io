@@ -138,11 +138,14 @@ function renderEquipmentTable(data) {
     const nextMaintenance = calculateNextMaintenance(eq.letzte_wartung, eq.wartungsintervall);
     const imgSrc = eq.bild_base64 ? `data:image/jpeg;base64,${eq.bild_base64}` : 'placeholder.jpg';
 
+    // Kategorie-Namen anhand der ID ermitteln
+    const category = categories.find(cat => cat.id == eq.kategorie)?.name || eq.kategorie;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><img src="${imgSrc}" style="width:50px;height:auto;"></td>
       <td>${eq.name}</td>
-      <td>${eq.kategorie}</td>
+      <td>${category}</td>
       <td>${eq.beschreibung}</td>
       <td>${eq.groesse}</td>
       <td>${eq.letzte_wartung ? eq.letzte_wartung.substring(0,10) : '-'}</td>
@@ -158,7 +161,7 @@ function renderEquipmentTable(data) {
     card.innerHTML = `
       <img src="${imgSrc}" style="width:100%;max-width:200px;">
       <h3>${eq.name}</h3>
-      <p>Kategorie: ${eq.kategorie}</p>
+      <p>Kategorie: ${category}</p>
       <p>Status: ${eq.status}</p>
       <p>Beschreibung: ${eq.beschreibung}</p>
       <p>Größe: ${eq.groesse}</p>
@@ -168,6 +171,7 @@ function renderEquipmentTable(data) {
     cardsContainer.appendChild(card);
   });
 }
+
 
 function calculateNextMaintenance(last, interval) {
   if (!last || !interval) return null;
@@ -196,8 +200,9 @@ function editEquipment(eq) {
   document.getElementById('eq-letztewartung').value = eq.letzte_wartung ? eq.letzte_wartung.substring(0,10) : '';
   document.getElementById('eq-wartungsintervall').value = eq.wartungsintervall;
   document.getElementById('eq-status').value = eq.status;
+
   populateCategories();
-  document.getElementById('eq-kategorie').value = eq.kategorie;
+  document.getElementById('eq-kategorie').value = eq.kategorie; // <- jetzt ID-basiert
 
   if (eq.bild_base64) {
     const img = document.getElementById('existing-image');
@@ -205,6 +210,7 @@ function editEquipment(eq) {
     img.style.display = 'block';
   }
 }
+
 
 function closeEquipmentModal() {
   document.getElementById('equipmentModal').style.display = 'none';
@@ -214,7 +220,7 @@ function populateCategories() {
   const select = document.getElementById('eq-kategorie');
   select.innerHTML = '';
   categories.forEach(cat => {
-    select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+    select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
   });
 }
 
