@@ -429,3 +429,9 @@ input:disabled {
     margin-top: 5px;
     font-size: 1em;
 }
+
+html, body {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+}
