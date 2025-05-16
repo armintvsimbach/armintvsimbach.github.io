@@ -58,7 +58,10 @@
   </header>
 
   <main>
-<div style="margin-bottom: 20px;"><button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button></div>
+<div style="margin-bottom: 20px;">
+  <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
+  <input type="text" id="mobile-search" placeholder="Mitglieder suchen..." style="display: none; margin: 10px auto; padding: 0.5rem; max-width: 600px; width: 100%; box-sizing: border-box;">
+</div>
 
     <table id="members-table" class="display responsive nowrap" style="width:100%">
       <thead>
@@ -79,8 +82,7 @@
       <tbody></tbody>
     </table>
 
-    <input type="text" id="mobile-search" placeholder="Mitglieder suchen..." class="mobile-search">
-<div class="member-cards"></div>
+    <div class="member-cards"></div>
   </main>
 
   <div id="user-info" style="text-align: center; padding: 10px;"></div>
