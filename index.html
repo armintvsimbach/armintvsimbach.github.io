@@ -27,25 +27,34 @@
 <main>
     <h2>Dashboard</h2>
 
-<div class="dashboard">
-    <div class="card active">
-        <p id="active-members">0</p>
-        <h3>Aktive Mitglieder</h3>
+    <div class="dashboard">
+        <div class="card active">
+            <p id="active-members">0</p>
+            <h3>Aktive Mitglieder</h3>
+        </div>
+        <div class="card overdue-rentals">
+            <p id="overdue-rentals">0</p>
+            <h3>Überfällige Ausleihen</h3>
+        </div>
+        <div class="card ttu">
+            <p id="invalid-ttu">0</p>
+            <h3>Ungültige TTU</h3>
+        </div>
+        <div class="card wartung">
+            <p id="overdue-maintenance">0</p>
+            <h3>Überfällige Wartungen</h3>
+        </div>
     </div>
-    <div class="card overdue-rentals">
-        <p id="overdue-rentals">0</p>
+</main>
+
+<!-- MODAL: Überfällige Ausleihen -->
+<div id="overdueModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
         <h3>Überfällige Ausleihen</h3>
-    </div>
-    <div class="card ttu">
-        <p id="invalid-ttu">0</p>
-        <h3>Ungültige TTU</h3>
-    </div>
-    <div class="card wartung">
-        <p id="overdue-maintenance">0</p>
-        <h3>Überfällige Wartungen</h3>
+        <ul id="overdue-list"></ul>
     </div>
 </div>
-</main>
 
 <div id="user-info" style="text-align: center; padding: 10px;"></div>
 
@@ -83,11 +92,9 @@ function loadDashboard() {
         apiFetch(apiRentals)
     ])
     .then(([members, equipment, rentals]) => {
-        // Mitglieder zählen
         const activeMembers = members.filter(m => m.status === "aktiv").length;
         const invalidTTU = members.filter(m => !m.ttu_gueltigkeit || new Date(m.ttu_gueltigkeit) < new Date()).length;
 
-        // Equipment Wartungen zählen
         const overdueMaintenance = equipment.filter(eq => {
             if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
             const last = new Date(eq.letzte_wartung);
@@ -95,7 +102,6 @@ function loadDashboard() {
             return last < new Date();
         }).length;
 
-        // Überfällige Ausleihen zählen (14 Tage ab rental_date)
         const now = new Date();
         const overdueRentals = rentals.filter(r => {
             const due = new Date(r.rental_date);
@@ -103,7 +109,6 @@ function loadDashboard() {
             return due < now;
         }).length;
 
-        // Werte setzen
         document.getElementById('active-members').innerText = activeMembers;
         document.getElementById('invalid-ttu').innerText = invalidTTU;
         document.getElementById('overdue-maintenance').innerText = overdueMaintenance;
@@ -114,7 +119,45 @@ function loadDashboard() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadDashboard);
+function openModal(overdueItems) {
+    const modal = document.getElementById("overdueModal");
+    const list = document.getElementById("overdue-list");
+    list.innerHTML = "";
+
+    overdueItems.forEach(item => {
+        const due = new Date(item.rental_date);
+        due.setDate(due.getDate() + 14);
+        const daysOverdue = Math.floor((new Date() - due) / (1000 * 60 * 60 * 24));
+        const li = document.createElement("li");
+        li.textContent = `${item.equipment_name || "Gerät"} – verliehen an Mitglied ID ${item.member_id}, überfällig seit ${daysOverdue} Tagen`;
+        list.appendChild(li);
+    });
+
+    modal.classList.remove("hidden");
+}
+
+function closeModal() {
+    document.getElementById("overdueModal").classList.add("hidden");
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+
+    const overdueCard = document.querySelector('.card.overdue-rentals');
+    overdueCard.addEventListener('click', () => {
+        apiFetch(apiRentals)
+            .then(rentals => {
+                const now = new Date();
+                const overdueItems = rentals.filter(r => {
+                    const due = new Date(r.rental_date);
+                    due.setDate(due.getDate() + 14);
+                    return due < now;
+                });
+                openModal(overdueItems);
+            })
+            .catch(err => console.error("Fehler beim Laden der Verleihdaten:", err));
+    });
+});
 </script>
 
 </body>
