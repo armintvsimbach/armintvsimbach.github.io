@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verleih - Tauchclub Simbach am Inn</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="header-container">
+        <img src="Logo.png" alt="Vereinslogo" class="logo">
+        <h1>TC Simbach</h1>
+    </div>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+
+    <nav id="main-nav">
+        <a href="index.html">Start</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <h2>Verleihübersicht</h2>
+    <div style="margin-bottom: 20px;">
+        <button onclick="openAddRentalModal()">➕ Neuen Verleih erfassen</button>
+        <input type="text" id="search-rentals" placeholder="Verleihvorgänge suchen">
+    </div>
+
+    <table id="rental-table">
+        <thead>
+            <tr>
+                <th>Mitglied</th>
+                <th>Equipment</th>
+                <th>Verleihdatum</th>
+                <th>Fälligkeit</th>
+                <th>Status</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="rental-cards"></div>
+</main>
+
+<div id="user-info" style="text-align: center; padding: 10px;"></div>
+
+<!-- Verleih Modal -->
+<div class="modal" id="rentalModal" style="display:none;">
+    <div class="modal-content">
+        <h2 id="rental-modal-title">Neuen Verleih erfassen</h2>
+        <form id="rental-form">
+            <table style="width: 100%;">
+                <tr>
+                    <td>Mitglied:</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <input type="text" id="r-member-search" placeholder="Mitglied suchen..." autocomplete="off" required>
+                            <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
+                            <input type="hidden" id="r-member-id">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Equipment:</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <input type="text" id="r-equipment-search" placeholder="Equipment suchen..." autocomplete="off" required>
+                            <ul id="r-equipment-suggestions" class="autocomplete-suggestions"></ul>
+                            <input type="hidden" id="r-equipment-id">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Verleihdatum:</td>
+                    <td><input type="date" id="r-date" required onchange="updateDueDateField()"></td>
+                </tr>
+                <tr>
+                    <td>Rückgabe bis:</td>
+                    <td><input type="text" id="r-due-date" readonly style="background-color:#eee;"></td>
+                </tr>
+            </table>
+            <br>
+            <button type="submit">Speichern</button>
+            <button type="button" onclick="closeRentalModal()">Abbrechen</button>
+        </form>
+    </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+checkLogin();
+setupTokenExpiryWatcher();
+
+const user = getUserInfo();
+if (user) {
+    document.getElementById('user-info').innerHTML = `Angemeldet als <strong>${user.username}</strong> (${user.role}) <button onclick="logout()" style="margin-left: 10px;">Logout</button>`;
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
+}
+
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('show');
+}
+
+function closeRentalModal() {
+    document.getElementById('rentalModal').style.display = 'none';
+}
+
+function openAddRentalModal() {
+    document.getElementById('rental-form').reset();
+    document.getElementById('rental-modal-title').innerText = "Neuen Verleih erfassen";
+    const todayStr = new Date().toISOString().substr(0, 10);
+    document.getElementById('r-date').value = todayStr;
+    updateDueDateField();
+    document.getElementById('rentalModal').style.display = 'flex';
+    resetInput('r-member-search', 'r-member-id');
+    resetInput('r-equipment-search', 'r-equipment-id');
+    setupAutocomplete();
+}
+
+function resetInput(inputId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    input.disabled = false;
+    input.value = '';
+    hidden.value = '';
+    const clearBtn = input.parentNode.querySelector('.clear-button');
+    if (clearBtn) clearBtn.remove();
+}
+
+const api = {
+    members: 'https://tcs-manager-backend.onrender.com/api/members',
+    equipment: 'https://tcs-manager-backend.onrender.com/api/equipment',
+    rentals: 'https://tcs-manager-backend.onrender.com/api/rentals'
+};
+
+let members = [], equipmentList = [], allEquipmentList = [], rentals = [];
+
+function fetchWithAuth(url) {
+    return fetch(url, { headers: { "Authorization": "Bearer " + localStorage.getItem("token") } }).then(r => r.json());
+}
+
+async function loadActiveMembers() {
+    members = await fetchWithAuth(api.members).then(data => data.filter(m => m.status.toLowerCase() === "aktiv" && new Date(m.ttu_gueltigkeit) >= new Date()));
+}
+
+async function loadAvailableEquipment() {
+    equipmentList = await fetchWithAuth(api.equipment).then(data => data.filter(e => e.status === "Aktiv" && !e.verliehen));
+}
+
+async function loadAllEquipment() {
+    allEquipmentList = await fetchWithAuth(api.equipment);
+}
+
+async function loadRentals() {
+    rentals = await fetchWithAuth(api.rentals);
+    renderRentalTable();
+}
+
+function getDueDate(rentalDate) {
+    const date = new Date(rentalDate);
+    date.setDate(date.getDate() + 14);
+    return date;
+}
+
+function formatDate(dateStringOrDate) {
+    if (!dateStringOrDate) return '-';
+    const date = new Date(dateStringOrDate);
+    return date.toISOString().split('T')[0];
+}
+
+function renderRentalTable() {
+    const tbody = document.querySelector('#rental-table tbody');
+    const cardsContainer = document.querySelector('.rental-cards');
+    tbody.innerHTML = '';
+    cardsContainer.innerHTML = '';
+
+    rentals.sort((a, b) => new Date(getDueDate(a.rental_date)) - new Date(getDueDate(b.rental_date)));
+
+    rentals.forEach(rental => {
+        const member = members.find(m => m.id == rental.member_id);
+        const equipment = allEquipmentList.find(eq => eq.id == rental.equipment_id);
+        const memberName = member ? `${member.vorname} ${member.name}` : rental.member_id;
+        const equipmentName = equipment ? equipment.name : rental.equipment_id;
+        const dueDate = getDueDate(rental.rental_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const tr = document.createElement('tr');
+        const dueDateFormatted = formatDate(dueDate);
+        const isOverdue = dueDate < today;
+
+        tr.innerHTML = `
+            <td>${memberName}</td>
+            <td>${equipmentName}</td>
+            <td>${formatDate(rental.rental_date)}</td>
+            <td class="due-date" style="${isOverdue ? 'color: red; font-weight: bold;' : ''}">${dueDateFormatted}</td>
+            <td>${rental.status}</td>
+            <td><button onclick='confirmReturn(${JSON.stringify(rental)})'>🚪</button></td>
+        `;
+        tbody.appendChild(tr);
+
+        const card = document.createElement('div');
+        card.className = "equipment-card";
+        card.innerHTML = `
+            <h3>${memberName}</h3>
+            <p><strong>Equipment:</strong> ${equipmentName}</p>
+            <p><strong>Verleihdatum:</strong> ${formatDate(rental.rental_date)}</p>
+            <p><strong>Fälligkeit:</strong> <span style="${isOverdue ? 'color: red; font-weight: bold;' : ''}">${dueDateFormatted}</span></p>
+            <p><strong>Status:</strong> ${rental.status}</p>
+            <button onclick='confirmReturn(${JSON.stringify(rental)})'>🚪</button>
+        `;
+        cardsContainer.appendChild(card);
+    });
+}
+
+async function confirmReturn(rental) {
+    const today = new Date().toISOString().split('T')[0];
+    if (!confirm(`Rückgabe bestätigen:\n\nMitglied: ${rental.member_id}\nEquipment: ${rental.equipment_id}\nDatum: ${today}`)) return;
+
+    await fetch(`${api.rentals}/${rental.id}/return`, { method: 'PUT', headers: { "Authorization": "Bearer " + localStorage.getItem("token") } });
+
+    await loadAvailableEquipment();
+    await loadRentals();
+}
+
+function setClearButton(inputElement, hiddenInput) {
+    const wrapper = inputElement.parentNode;
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'clear-button';
+    clearBtn.innerHTML = '✕';
+    wrapper.appendChild(clearBtn);
+
+    clearBtn.onclick = () => {
+        inputElement.disabled = false;
+        inputElement.value = '';
+        hiddenInput.value = '';
+        clearBtn.remove();
+    };
+}
+
+function setupAutocomplete() {
+    setupAutocompleteField('r-member-search', 'r-member-suggestions', 'r-member-id', members, m => `${m.vorname} ${m.name}`);
+    setupAutocompleteField('r-equipment-search', 'r-equipment-suggestions', 'r-equipment-id', equipmentList, e => `${e.name} (${e.kategorie}, ${e.beschreibung}, ${e.groesse})`);
+}
+
+function setupAutocompleteField(inputId, suggestionsId, hiddenId, list, displayFn) {
+    const input = document.getElementById(inputId);
+    const suggestions = document.getElementById(suggestionsId);
+    const hidden = document.getElementById(hiddenId);
+
+    input.oninput = () => {
+        const search = input.value.toLowerCase();
+        suggestions.innerHTML = '';
+        if (!search) return;
+
+        const results = list.filter(item => displayFn(item).toLowerCase().includes(search)).slice(0, 3);
+        results.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = displayFn(item);
+            li.onclick = () => {
+                input.value = displayFn(item);
+                hidden.value = item.id;
+                suggestions.innerHTML = '';
+                input.disabled = true;
+                setClearButton(input, hidden);
+            };
+            suggestions.appendChild(li);
+        });
+    };
+}
+
+document.getElementById('rental-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const rental = {
+        member_id: document.getElementById('r-member-id').value,
+        equipment_id: document.getElementById('r-equipment-id').value,
+        rental_date: document.getElementById('r-date').value,
+    };
+
+    const response = await fetch(api.rentals, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', "Authorization": "Bearer " + localStorage.getItem("token") },
+        body: JSON.stringify(rental)
+    });
+
+    const newRental = await response.json();
+    closeRentalModal();
+
+    rentals.unshift(newRental);
+    renderRentalTable();
+
+    await loadAvailableEquipment();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    Promise.all([loadActiveMembers(), loadAllEquipment(), loadAvailableEquipment()])
+        .then(() => loadRentals());
+});
+
+function updateDueDateField() {
+    const dateInput = document.getElementById("r-date");
+    const dueField = document.getElementById("r-due-date");
+    if (!dateInput.value) {
+        dueField.value = "";
+        return;
+    }
+    const date = new Date(dateInput.value);
+    date.setDate(date.getDate() + 14);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    dueField.value = `${day}.${month}.${year}`;
+}
+</script>
+</body>
+</html>
