@@ -1,151 +1,148 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mitgliederverwaltung - TCS Manager</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mitgliederverwaltung - TCS Manager</title>
 
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.3.1/css/rowGroup.dataTables.min.css">
-    <link rel="stylesheet" href="style.css">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.3.1/css/rowGroup.dataTables.min.css">
+  <link rel="stylesheet" href="style.css">
 
-    <!-- jQuery + DataTables JS -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/rowgroup/1.3.1/js/dataTables.rowGroup.min.js"></script>
-    <style>
-        @media (max-width: 768px) {
-            #members-table {
-                display: none;
-            }
-            .member-cards {
-                display: block;
-            }
-        }
-        @media (min-width: 769px) {
-            .member-cards {
-                display: none;
-            }
-        }
-        .member-card {
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-    </style>
+  <!-- jQuery + DataTables JS -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/rowgroup/1.3.1/js/dataTables.rowGroup.min.js"></script>
+  <style>
+    .member-cards {
+      display: none;
+    }
+
+    .member-card {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      #members-table_wrapper {
+        display: none !important;
+      }
+
+      .member-cards {
+        display: block;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<header>
+  <header>
     <div class="header-container">
-        <img src="Logo.png" alt="Vereinslogo" class="logo">
-        <h1>TC Simbach</h1>
+      <img src="Logo.png" alt="Vereinslogo" class="logo">
+      <h1>TC Simbach</h1>
     </div>
     <div class="burger" onclick="toggleMenu()">☰</div>
 
     <nav id="main-nav">
-        <a href="index.html">Start</a>
-        <a href="verleih.html">Verleih</a>
-        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-        <a href="equipment.html">Equipmentverwaltung</a>
-        <a href="admin.html">Admin</a>
+      <a href="index.html">Start</a>
+      <a href="verleih.html">Verleih</a>
+      <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+      <a href="equipment.html">Equipmentverwaltung</a>
+      <a href="admin.html">Admin</a>
     </nav>
-</header>
+  </header>
 
-<main>
+  <main>
     <h2>Mitgliederverwaltung</h2>
-
     <div style="margin-bottom: 20px;">
-        <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
+      <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
     </div>
 
     <table id="members-table" class="display responsive nowrap" style="width:100%">
-        <thead>
-            <tr>
-                <th>Vorname</th>
-                <th>Name</th>
-                <th>Straße</th>
-                <th>Hausnummer</th>
-                <th>PLZ</th>
-                <th>Ort</th>
-                <th>Telefon</th>
-                <th>Mobil</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Aktion</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
+      <thead>
+        <tr>
+          <th>Vorname</th>
+          <th>Name</th>
+          <th>Straße</th>
+          <th>Hausnummer</th>
+          <th>PLZ</th>
+          <th>Ort</th>
+          <th>Telefon</th>
+          <th>Mobil</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
     </table>
+
     <div class="member-cards"></div>
-</main>
+  </main>
 
-<div id="user-info" style="text-align: center; padding: 10px;"></div>
+  <div id="user-info" style="text-align: center; padding: 10px;"></div>
 
-<!-- Modal -->
-<div class="modal" id="memberModal">
+  <!-- Modal -->
+  <div class="modal" id="memberModal">
     <div class="modal-content">
-        <h2 id="modal-title">Neues Mitglied</h2>
-        <form id="member-form">
-            <table style="width: 100%;">
-                <tr><td>Vorname:</td><td><input type="text" id="m-vorname" required></td></tr>
-                <tr><td>Name:</td><td><input type="text" id="m-name" required></td></tr>
-                <tr><td>Straße:</td><td><input type="text" id="m-strasse"></td></tr>
-                <tr><td>Hausnummer:</td><td><input type="text" id="m-hausnummer"></td></tr>
-                <tr><td>PLZ:</td><td><input type="text" id="m-plz"></td></tr>
-                <tr><td>Ort:</td><td><input type="text" id="m-ort"></td></tr>
-                <tr><td>Land:</td><td><input type="text" id="m-land"></td></tr>
-                <tr><td>Telefon:</td><td><input type="text" id="m-telefon"></td></tr>
-                <tr><td>Mobil:</td><td><input type="text" id="m-mobil"></td></tr>
-                <tr><td>Email:</td><td><input type="email" id="m-email"></td></tr>
-                <tr>
-                    <td>Status:</td>
-                    <td>
-                        <select id="m-status">
-                            <option value="aktiv" selected>aktiv</option>
-                            <option value="inaktiv">inaktiv</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr><td>TTU Gültigkeit:</td><td><input type="date" id="m-ttu"></td></tr>
-            </table>
-            <input type="hidden" id="m-id">
-            <button type="submit">Speichern</button>
-            <button type="button" onclick="closeMemberModal()">Abbrechen</button>
-        </form>
+      <h2 id="modal-title">Neues Mitglied</h2>
+      <form id="member-form">
+        <table style="width: 100%;">
+          <tr><td>Vorname:</td><td><input type="text" id="m-vorname" required></td></tr>
+          <tr><td>Name:</td><td><input type="text" id="m-name" required></td></tr>
+          <tr><td>Straße:</td><td><input type="text" id="m-strasse"></td></tr>
+          <tr><td>Hausnummer:</td><td><input type="text" id="m-hausnummer"></td></tr>
+          <tr><td>PLZ:</td><td><input type="text" id="m-plz"></td></tr>
+          <tr><td>Ort:</td><td><input type="text" id="m-ort"></td></tr>
+          <tr><td>Land:</td><td><input type="text" id="m-land"></td></tr>
+          <tr><td>Telefon:</td><td><input type="text" id="m-telefon"></td></tr>
+          <tr><td>Mobil:</td><td><input type="text" id="m-mobil"></td></tr>
+          <tr><td>Email:</td><td><input type="email" id="m-email"></td></tr>
+          <tr>
+            <td>Status:</td>
+            <td>
+              <select id="m-status">
+                <option value="aktiv" selected>aktiv</option>
+                <option value="inaktiv">inaktiv</option>
+              </select>
+            </td>
+          </tr>
+          <tr><td>TTU Gültigkeit:</td><td><input type="date" id="m-ttu"></td></tr>
+        </table>
+        <input type="hidden" id="m-id">
+        <button type="submit">Speichern</button>
+        <button type="button" onclick="closeMemberModal()">Abbrechen</button>
+      </form>
     </div>
-</div>
+  </div>
 
-<script src="shared.js"></script>
-<script>
-let membersData = [];
+  <script src="shared.js"></script>
+  <script>
+    let membersData = [];
+    const safe = val => val ?? '';
 
-function safe(val) {
-    return val ?? '';
-}
-
-function fetchMembers() {
-    apiFetch("https://tcs-manager-backend.onrender.com/api/members")
+    function fetchMembers() {
+      apiFetch("https://tcs-manager-backend.onrender.com/api/members")
         .then(data => {
-            membersData = data;
-            renderMembersTable(membersData);
+          membersData = data;
+          renderMembersTable(membersData);
         });
-}
+    }
 
-function renderMembersTable(data) {
-    const tbody = document.querySelector('#members-table tbody');
-    const cardsContainer = document.querySelector('.member-cards');
-    tbody.innerHTML = '';
-    cardsContainer.innerHTML = '';
+    function renderMembersTable(data) {
+      const tbody = document.querySelector('#members-table tbody');
+      const cardsContainer = document.querySelector('.member-cards');
+      tbody.innerHTML = '';
+      cardsContainer.innerHTML = '';
 
-    data.forEach(member => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+      data.forEach(member => {
+        tbody.innerHTML += `
+          <tr>
             <td>${safe(member.vorname)}</td>
             <td>${safe(member.name)}</td>
             <td>${safe(member.strasse)}</td>
@@ -157,12 +154,11 @@ function renderMembersTable(data) {
             <td>${safe(member.email)}</td>
             <td>${safe(member.status)}</td>
             <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
+          </tr>
         `;
-        tbody.appendChild(tr);
 
-        const card = document.createElement('div');
-        card.className = 'member-card';
-        card.innerHTML = `
+        cardsContainer.innerHTML += `
+          <div class="member-card">
             <h3>${safe(member.vorname)} ${safe(member.name)}</h3>
             <p><strong>Adresse:</strong> ${safe(member.strasse)} ${safe(member.hausnummer)}, ${safe(member.plz)} ${safe(member.ort)}</p>
             <p><strong>Telefon:</strong> ${safe(member.telefon)}</p>
@@ -170,64 +166,61 @@ function renderMembersTable(data) {
             <p><strong>Email:</strong> <a href="mailto:${safe(member.email)}">${safe(member.email)}</a></p>
             <p><strong>Status:</strong> ${safe(member.status)}</p>
             <button onclick='openEditMemberModal(${JSON.stringify(member)})'>Bearbeiten</button>
+          </div>
         `;
-        cardsContainer.appendChild(card);
-    });
+      });
 
-    if ($.fn.DataTable.isDataTable('#members-table')) {
+      if ($.fn.DataTable.isDataTable('#members-table')) {
         $('#members-table').DataTable().destroy();
-    }
+      }
 
-    $('#members-table').DataTable({
+      $('#members-table').DataTable({
         responsive: true,
         paging: true,
         searching: true,
         ordering: true,
-        rowGroup: {
-            dataSrc: 9
-        },
+        rowGroup: { dataSrc: 9 },
         language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json"
+          url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json"
         },
         columnDefs: [
-            { orderable: false, targets: -1 }
+          { orderable: false, targets: -1 }
         ]
-    });
-}
+      });
+    }
 
-function openAddMemberModal() {
-    document.getElementById('modal-title').innerText = "Neues Mitglied";
-    document.getElementById('member-form').reset();
-    document.getElementById('m-id').value = '';
-    document.getElementById('memberModal').style.display = 'flex';
-}
+    function openAddMemberModal() {
+      document.getElementById('modal-title').innerText = "Neues Mitglied";
+      document.getElementById('member-form').reset();
+      document.getElementById('m-id').value = '';
+      document.getElementById('memberModal').style.display = 'flex';
+    }
 
-function openEditMemberModal(member) {
-    openAddMemberModal();
-    document.getElementById('modal-title').innerText = "Mitglied bearbeiten";
-    document.getElementById('m-id').value = member.id;
-    document.getElementById('m-vorname').value = safe(member.vorname);
-    document.getElementById('m-name').value = safe(member.name);
-    document.getElementById('m-strasse').value = safe(member.strasse);
-    document.getElementById('m-hausnummer').value = safe(member.hausnummer);
-    document.getElementById('m-plz').value = safe(member.plz);
-    document.getElementById('m-ort').value = safe(member.ort);
-    document.getElementById('m-land').value = safe(member.land);
-    document.getElementById('m-telefon').value = safe(member.telefon);
-    document.getElementById('m-mobil').value = safe(member.mobil);
-    document.getElementById('m-email').value = safe(member.email);
-    document.getElementById('m-status').value = safe(member.status);
-    document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0, 10) : '';
-}
+    function openEditMemberModal(member) {
+      openAddMemberModal();
+      document.getElementById('modal-title').innerText = "Mitglied bearbeiten";
+      document.getElementById('m-id').value = member.id;
+      document.getElementById('m-vorname').value = safe(member.vorname);
+      document.getElementById('m-name').value = safe(member.name);
+      document.getElementById('m-strasse').value = safe(member.strasse);
+      document.getElementById('m-hausnummer').value = safe(member.hausnummer);
+      document.getElementById('m-plz').value = safe(member.plz);
+      document.getElementById('m-ort').value = safe(member.ort);
+      document.getElementById('m-land').value = safe(member.land);
+      document.getElementById('m-telefon').value = safe(member.telefon);
+      document.getElementById('m-mobil').value = safe(member.mobil);
+      document.getElementById('m-email').value = safe(member.email);
+      document.getElementById('m-status').value = safe(member.status);
+      document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0, 10) : '';
+    }
 
-function closeMemberModal() {
-    document.getElementById('memberModal').style.display = 'none';
-}
+    function closeMemberModal() {
+      document.getElementById('memberModal').style.display = 'none';
+    }
 
-document.getElementById('member-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const member = {
+    document.getElementById('member-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const member = {
         vorname: document.getElementById('m-vorname').value,
         name: document.getElementById('m-name').value,
         strasse: document.getElementById('m-strasse').value,
@@ -240,42 +233,43 @@ document.getElementById('member-form').addEventListener('submit', (e) => {
         email: document.getElementById('m-email').value,
         status: document.getElementById('m-status').value,
         ttu_gueltigkeit: document.getElementById('m-ttu').value
-    };
+      };
+      const id = document.getElementById('m-id').value;
+      const url = id ? `https://tcs-manager-backend.onrender.com/api/members/${id}` : "https://tcs-manager-backend.onrender.com/api/members";
+      const method = id ? 'PUT' : 'POST';
 
-    const id = document.getElementById('m-id').value;
-    const url = id ? `https://tcs-manager-backend.onrender.com/api/members/${id}` : "https://tcs-manager-backend.onrender.com/api/members";
-    const method = id ? 'PUT' : 'POST';
-
-    fetch(url, {
+      fetch(url, {
         method,
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + localStorage.getItem("token")
+        },
         body: JSON.stringify(member)
-    }).then(() => {
+      }).then(() => {
         closeMemberModal();
         fetchMembers();
+      });
     });
-});
 
-document.addEventListener('DOMContentLoaded', fetchMembers);
-checkLogin();
-setupTokenExpiryWatcher();
-const user = getUserInfo();
-if (user) {
-    document.getElementById('user-info').innerHTML = `
+    document.addEventListener('DOMContentLoaded', fetchMembers);
+    checkLogin();
+    setupTokenExpiryWatcher();
+    const user = getUserInfo();
+    if (user) {
+      document.getElementById('user-info').innerHTML = `
         <strong>${user.username}</strong> (${user.role})
         <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-    `;
-}
+      `;
+    }
 
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
-}
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    }
 
-function toggleMenu() {
-    document.getElementById('main-nav').classList.toggle('show');
-}
-</script>
-
+    function toggleMenu() {
+      document.getElementById('main-nav').classList.toggle('show');
+    }
+  </script>
 </body>
 </html>
