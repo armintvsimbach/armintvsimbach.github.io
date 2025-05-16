@@ -1,7 +1,7 @@
 document.getElementById('login-form').addEventListener('submit', (e) => {
     e.preventDefault();
 
-    fetch("https://tcs-manager-backend.onrender.com/api/login", {
+    fetch("https://tcs-manager-backend.onrender.com/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
