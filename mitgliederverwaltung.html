@@ -4,7 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mitgliederverwaltung - TCS Manager</title>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.3.1/css/rowGroup.dataTables.min.css">
     <link rel="stylesheet" href="style.css">
+
+    <!-- jQuery + DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/rowgroup/1.3.1/js/dataTables.rowGroup.min.js"></script>
+    <style>
+        @media (max-width: 768px) {
+            #members-table {
+                display: none;
+            }
+            .member-cards {
+                display: block;
+            }
+        }
+        @media (min-width: 769px) {
+            .member-cards {
+                display: none;
+            }
+        }
+        .member-card {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
 
@@ -14,14 +47,14 @@
         <h1>TC Simbach</h1>
     </div>
     <div class="burger" onclick="toggleMenu()">☰</div>
-  
-  <nav id="main-nav">
-    <a href="index.html">Start</a>
-	<a href="verleih.html">Verleih</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="admin.html">Admin</a>
-  </nav>
+
+    <nav id="main-nav">
+        <a href="index.html">Start</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 </header>
 
 <main>
@@ -29,10 +62,9 @@
 
     <div style="margin-bottom: 20px;">
         <button onclick="openAddMemberModal()">➕ Neues Mitglied hinzufügen</button>
-        <input type="text" id="search-members" placeholder="Mitglieder suchen.">
     </div>
 
-    <table id="members-table">
+    <table id="members-table" class="display responsive nowrap" style="width:100%">
         <thead>
             <tr>
                 <th>Vorname</th>
@@ -50,11 +82,12 @@
         </thead>
         <tbody></tbody>
     </table>
-
     <div class="member-cards"></div>
 </main>
+
 <div id="user-info" style="text-align: center; padding: 10px;"></div>
-<!-- Mitglied-Modal -->
+
+<!-- Modal -->
 <div class="modal" id="memberModal">
     <div class="modal-content">
         <h2 id="modal-title">Neues Mitglied</h2>
@@ -71,14 +104,14 @@
                 <tr><td>Mobil:</td><td><input type="text" id="m-mobil"></td></tr>
                 <tr><td>Email:</td><td><input type="email" id="m-email"></td></tr>
                 <tr>
-				  <td>Status:</td>
-				  <td>
-					<select id="m-status">
-					  <option value="aktiv" selected>aktiv</option>
-					  <option value="inaktiv">inaktiv</option>
-					</select>
-				  </td>
-				</tr>
+                    <td>Status:</td>
+                    <td>
+                        <select id="m-status">
+                            <option value="aktiv" selected>aktiv</option>
+                            <option value="inaktiv">inaktiv</option>
+                        </select>
+                    </td>
+                </tr>
                 <tr><td>TTU Gültigkeit:</td><td><input type="date" id="m-ttu"></td></tr>
             </table>
             <input type="hidden" id="m-id">
@@ -94,76 +127,69 @@ let membersData = [];
 
 function fetchMembers() {
     apiFetch("https://tcs-manager-backend.onrender.com/api/members")
-    
-    .then(data => {
-        membersData = data;
-        renderMembersTable(membersData);
-    });
+        .then(data => {
+            membersData = data;
+            renderMembersTable(membersData);
+        });
 }
 
-function renderMembersTable(data, highlight = '') {
+function renderMembersTable(data) {
     const tbody = document.querySelector('#members-table tbody');
     const cardsContainer = document.querySelector('.member-cards');
     tbody.innerHTML = '';
     cardsContainer.innerHTML = '';
 
     data.forEach(member => {
-        const highlightText = (text) => {
-            if (!highlight) return text;
-            const regex = new RegExp(`(${highlight})`, 'gi');
-            return (text + '').replace(regex, '<mark>$1</mark>');
-        };
-
-        // Tabellenansicht (Desktop)
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${highlightText(member.vorname)}</td>
-            <td>${highlightText(member.name)}</td>
-            <td>${highlightText(member.strasse)}</td>
-            <td>${highlightText(member.hausnummer)}</td>
-            <td>${highlightText(member.plz)}</td>
-            <td>${highlightText(member.ort)}</td>
-            <td>${highlightText(member.telefon)}</td>
-            <td>${highlightText(member.mobil)}</td>
-            <td>${highlightText(member.email)}</td>
-            <td>${highlightText(member.status)}</td>
+            <td>${member.vorname}</td>
+            <td>${member.name}</td>
+            <td>${member.strasse}</td>
+            <td>${member.hausnummer}</td>
+            <td>${member.plz}</td>
+            <td>${member.ort}</td>
+            <td>${member.telefon}</td>
+            <td>${member.mobil}</td>
+            <td>${member.email}</td>
+            <td>${member.status}</td>
             <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
         `;
         tbody.appendChild(tr);
 
-        // Kartenansicht (mobil)
         const card = document.createElement('div');
-        card.className = "member-card";
+        card.className = 'member-card';
         card.innerHTML = `
             <h3>${member.vorname} ${member.name}</h3>
-            <p>Straße: ${member.strasse} ${member.hausnummer}</p>
-            <p>PLZ / Ort: ${member.plz} ${member.ort}</p>
-            <p>Telefon: <a href="tel:${member.telefon}">${member.telefon}</a></p>
-            <p>Mobil: <a href="tel:${member.mobil}">${member.mobil}</a></p>
-            <p>Email: <a href="mailto:${member.email}">${member.email}</a></p>
-            <p>Status: ${member.status}</p>
+            <p><strong>Adresse:</strong> ${member.strasse} ${member.hausnummer}, ${member.plz} ${member.ort}</p>
+            <p><strong>Telefon:</strong> ${member.telefon}</p>
+            <p><strong>Mobil:</strong> ${member.mobil}</p>
+            <p><strong>Email:</strong> <a href="mailto:${member.email}">${member.email}</a></p>
+            <p><strong>Status:</strong> ${member.status}</p>
             <button onclick='openEditMemberModal(${JSON.stringify(member)})'>Bearbeiten</button>
         `;
         cardsContainer.appendChild(card);
     });
-}
 
-function applyMemberSearch() {
-    const query = document.getElementById('search-members').value.toLowerCase();
-    const filtered = membersData.filter(member =>
-        Object.values(member).some(val => (val + '').toLowerCase().includes(query))
-    );
-    renderMembersTable(filtered, query);
-}
-
-const searchInput = document.getElementById('search-members');
-searchInput.addEventListener('input', applyMemberSearch);
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === "Escape") {
-        searchInput.value = '';
-        renderMembersTable(membersData);
+    if ($.fn.DataTable.isDataTable('#members-table')) {
+        $('#members-table').DataTable().destroy();
     }
-});
+
+    $('#members-table').DataTable({
+        responsive: true,
+        paging: true,
+        searching: true,
+        ordering: true,
+        rowGroup: {
+            dataSrc: 9
+        },
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/de-DE.json"
+        },
+        columnDefs: [
+            { orderable: false, targets: -1 }
+        ]
+    });
+}
 
 function openAddMemberModal() {
     document.getElementById('modal-title').innerText = "Neues Mitglied";
@@ -227,8 +253,6 @@ document.getElementById('member-form').addEventListener('submit', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', fetchMembers);
-
-// Benutzerinfo + Logout
 checkLogin();
 setupTokenExpiryWatcher();
 const user = getUserInfo();
@@ -247,7 +271,6 @@ function logout() {
 function toggleMenu() {
     document.getElementById('main-nav').classList.toggle('show');
 }
-
 </script>
 
 </body>
