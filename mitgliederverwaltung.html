@@ -125,6 +125,10 @@
 <script>
 let membersData = [];
 
+function safe(val) {
+    return val ?? '';
+}
+
 function fetchMembers() {
     apiFetch("https://tcs-manager-backend.onrender.com/api/members")
         .then(data => {
@@ -142,16 +146,16 @@ function renderMembersTable(data) {
     data.forEach(member => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${member.vorname}</td>
-            <td>${member.name}</td>
-            <td>${member.strasse}</td>
-            <td>${member.hausnummer}</td>
-            <td>${member.plz}</td>
-            <td>${member.ort}</td>
-            <td>${member.telefon}</td>
-            <td>${member.mobil}</td>
-            <td>${member.email}</td>
-            <td>${member.status}</td>
+            <td>${safe(member.vorname)}</td>
+            <td>${safe(member.name)}</td>
+            <td>${safe(member.strasse)}</td>
+            <td>${safe(member.hausnummer)}</td>
+            <td>${safe(member.plz)}</td>
+            <td>${safe(member.ort)}</td>
+            <td>${safe(member.telefon)}</td>
+            <td>${safe(member.mobil)}</td>
+            <td>${safe(member.email)}</td>
+            <td>${safe(member.status)}</td>
             <td><button onclick='openEditMemberModal(${JSON.stringify(member)})'>✏️</button></td>
         `;
         tbody.appendChild(tr);
@@ -159,12 +163,12 @@ function renderMembersTable(data) {
         const card = document.createElement('div');
         card.className = 'member-card';
         card.innerHTML = `
-            <h3>${member.vorname} ${member.name}</h3>
-            <p><strong>Adresse:</strong> ${member.strasse} ${member.hausnummer}, ${member.plz} ${member.ort}</p>
-            <p><strong>Telefon:</strong> ${member.telefon}</p>
-            <p><strong>Mobil:</strong> ${member.mobil}</p>
-            <p><strong>Email:</strong> <a href="mailto:${member.email}">${member.email}</a></p>
-            <p><strong>Status:</strong> ${member.status}</p>
+            <h3>${safe(member.vorname)} ${safe(member.name)}</h3>
+            <p><strong>Adresse:</strong> ${safe(member.strasse)} ${safe(member.hausnummer)}, ${safe(member.plz)} ${safe(member.ort)}</p>
+            <p><strong>Telefon:</strong> ${safe(member.telefon)}</p>
+            <p><strong>Mobil:</strong> ${safe(member.mobil)}</p>
+            <p><strong>Email:</strong> <a href="mailto:${safe(member.email)}">${safe(member.email)}</a></p>
+            <p><strong>Status:</strong> ${safe(member.status)}</p>
             <button onclick='openEditMemberModal(${JSON.stringify(member)})'>Bearbeiten</button>
         `;
         cardsContainer.appendChild(card);
@@ -202,17 +206,17 @@ function openEditMemberModal(member) {
     openAddMemberModal();
     document.getElementById('modal-title').innerText = "Mitglied bearbeiten";
     document.getElementById('m-id').value = member.id;
-    document.getElementById('m-vorname').value = member.vorname;
-    document.getElementById('m-name').value = member.name;
-    document.getElementById('m-strasse').value = member.strasse;
-    document.getElementById('m-hausnummer').value = member.hausnummer;
-    document.getElementById('m-plz').value = member.plz;
-    document.getElementById('m-ort').value = member.ort;
-    document.getElementById('m-land').value = member.land;
-    document.getElementById('m-telefon').value = member.telefon;
-    document.getElementById('m-mobil').value = member.mobil;
-    document.getElementById('m-email').value = member.email;
-    document.getElementById('m-status').value = member.status;
+    document.getElementById('m-vorname').value = safe(member.vorname);
+    document.getElementById('m-name').value = safe(member.name);
+    document.getElementById('m-strasse').value = safe(member.strasse);
+    document.getElementById('m-hausnummer').value = safe(member.hausnummer);
+    document.getElementById('m-plz').value = safe(member.plz);
+    document.getElementById('m-ort').value = safe(member.ort);
+    document.getElementById('m-land').value = safe(member.land);
+    document.getElementById('m-telefon').value = safe(member.telefon);
+    document.getElementById('m-mobil').value = safe(member.mobil);
+    document.getElementById('m-email').value = safe(member.email);
+    document.getElementById('m-status').value = safe(member.status);
     document.getElementById('m-ttu').value = member.ttu_gueltigkeit ? member.ttu_gueltigkeit.substring(0, 10) : '';
 }
 
