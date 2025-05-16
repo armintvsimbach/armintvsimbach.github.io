@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TCS Manager - Übersicht</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -92,7 +92,7 @@ function toggleMenu() {
 
 const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
 const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
-const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals/extended';
+const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals/extended'; // NEU: enthält member_name & equipment_name
 
 function loadDashboard() {
     Promise.all([
