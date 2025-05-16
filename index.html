@@ -92,7 +92,7 @@ function toggleMenu() {
 
 const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
 const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
-const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals';
+const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals/extended';
 
 function loadDashboard() {
     Promise.all([
@@ -139,7 +139,7 @@ function openModal(overdueItems) {
         due.setDate(due.getDate() + 14);
         const daysOverdue = Math.floor((new Date() - due) / (1000 * 60 * 60 * 24));
         const li = document.createElement("li");
-        li.textContent = `${item.equipment_name || "Gerät"} – verliehen an Mitglied ID ${item.member_id}, überfällig seit ${daysOverdue} Tagen`;
+        li.textContent = `${item.equipment_name} – verliehen an ${item.member_name}, überfällig seit ${daysOverdue} Tagen`;
         list.appendChild(li);
     });
 
