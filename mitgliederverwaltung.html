@@ -215,38 +215,41 @@
       document.getElementById('memberModal').style.display = 'none';
     }
 
-    document.getElementById('member-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const member = {
-        vorname: document.getElementById('m-vorname').value,
-        name: document.getElementById('m-name').value,
-        strasse: document.getElementById('m-strasse').value,
-        hausnummer: document.getElementById('m-hausnummer').value,
-        plz: document.getElementById('m-plz').value,
-        ort: document.getElementById('m-ort').value,
-        land: document.getElementById('m-land').value,
-        telefon: document.getElementById('m-telefon').value,
-        mobil: document.getElementById('m-mobil').value,
-        email: document.getElementById('m-email').value,
-        status: document.getElementById('m-status').value,
-        ttu_gueltigkeit: document.getElementById('m-ttu').value
-      };
-      const id = document.getElementById('m-id').value;
-      const url = id ? `https://tcs-manager-backend.onrender.com/api/members/${id}` : "https://tcs-manager-backend.onrender.com/api/members";
-      const method = id ? 'PUT' : 'POST';
+document.getElementById('member-form').addEventListener('submit', e => {
+  e.preventDefault();
 
-      fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + localStorage.getItem("token")
-        },
-        body: JSON.stringify(member)
-      }).then(() => {
-        closeMemberModal();
-        fetchMembers();
-      });
-    });
+  const member = {
+    vorname: document.getElementById('m-vorname').value || '',
+    name: document.getElementById('m-name').value || '',
+    strasse: document.getElementById('m-strasse').value || '',
+    hausnummer: document.getElementById('m-hausnummer').value || '',
+    plz: document.getElementById('m-plz').value || '',
+    ort: document.getElementById('m-ort').value || '',
+    land: document.getElementById('m-land').value || '',
+    telefon: document.getElementById('m-telefon').value || '',
+    mobil: document.getElementById('m-mobil').value || '',
+    email: document.getElementById('m-email').value || '',
+    status: document.getElementById('m-status').value || 'aktiv',
+    ttu_gueltigkeit: document.getElementById('m-ttu').value || null
+  };
+
+  const id = parseInt(document.getElementById('m-id').value, 10);
+  const url = id ? `https://tcs-manager-backend.onrender.com/api/members/${id}` : "https://tcs-manager-backend.onrender.com/api/members";
+  const method = id ? 'PUT' : 'POST';
+
+  fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify(member)
+  }).then(() => {
+    closeMemberModal();
+    fetchMembers();
+  });
+});
+
 
     document.addEventListener('DOMContentLoaded', fetchMembers);
     checkLogin();
