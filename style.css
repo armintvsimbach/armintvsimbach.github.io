@@ -418,6 +418,60 @@ input:disabled {
     margin-left: 10px;
 }
 
+#maintenanceModal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+#maintenanceModal:not(.hidden) {
+    display: flex;
+}
+
+#maintenanceModal .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80%;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.25s ease;
+}
+
+#maintenanceModal .modal-content h3 {
+    margin-top: 0;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+#maintenanceModal .modal-content ul {
+    list-style: none;
+    padding: 0;
+    font-size: 0.95em;
+    margin: 0;
+}
+
+#maintenanceModal .modal-content li {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+#maintenanceModal .modal-content .close {
+    float: right;
+    font-size: 1.5em;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+
 /* Dashboard-Zahlen vor Text */
 .card p {
     font-size: 2em;

@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCS Manager - Übersicht</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -69,116 +69,118 @@
 
 <script src="shared.js"></script>
 <script>
-checkLogin();
-setupTokenExpiryWatcher();
-
-const user = getUserInfo();
-if (user) {
-    document.getElementById('user-info').innerHTML = `
-        Angemeldet als <strong>${user.username}</strong> (${user.role}) 
-        <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-    `;
-}
-
-function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "login.html";
-}
-
-// Burger-Menü Funktion
-function toggleMenu() {
-    document.getElementById('main-nav').classList.toggle('show');
-}
-
-const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
-const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
-const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals/extended'; // NEU: enthält member_name & equipment_name
-
-function loadDashboard() {
-    Promise.all([
-        apiFetch(apiMembers),
-        apiFetch(apiEquipment),
-        apiFetch(apiRentals)
-    ])
-    .then(([members, equipment, rentals]) => {
-        const activeMembers = members.filter(m => m.status === "aktiv").length;
-        const invalidTTU = members.filter(m => !m.ttu_gueltigkeit || new Date(m.ttu_gueltigkeit) < new Date()).length;
-
-        const overdueMaintenance = equipment.filter(eq => {
-            if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
-            const last = new Date(eq.letzte_wartung);
-            last.setMonth(last.getMonth() + parseInt(eq.wartungsintervall));
-            return last < new Date();
-        }).length;
-
-        const now = new Date();
-        const overdueRentals = rentals.filter(r => {
-            const due = new Date(r.rental_date);
-            due.setDate(due.getDate() + 14);
-            return due < now;
-        }).length;
-
-        document.getElementById('active-members').innerText = activeMembers;
-        document.getElementById('invalid-ttu').innerText = invalidTTU;
-        document.getElementById('overdue-maintenance').innerText = overdueMaintenance;
-        document.getElementById('overdue-rentals').innerText = overdueRentals;
-    })
-    .catch(error => {
-        console.error("Fehler beim Laden:", error);
-    });
-}
-
-// MODAL: Überfällige Ausleihen
-function openModal(overdueItems) {
-    const modal = document.getElementById("overdueModal");
-    const list = document.getElementById("overdue-list");
-    list.innerHTML = "";
-
-    overdueItems.forEach(item => {
-        const due = new Date(item.rental_date);
-        due.setDate(due.getDate() + 14);
-        const daysOverdue = Math.floor((new Date() - due) / (1000 * 60 * 60 * 24));
-        const li = document.createElement("li");
-        li.textContent = `${item.equipment_name} – verliehen an ${item.member_name}, überfällig seit ${daysOverdue} Tagen`;
-        list.appendChild(li);
-    });
-
-    modal.classList.remove("hidden");
-}
-
 function closeModal() {
     document.getElementById("overdueModal").classList.add("hidden");
-}
-
-// MODAL: Überfällige Wartungen
-function openMaintenanceModal(items) {
-    const modal = document.getElementById("maintenanceModal");
-    const list = document.getElementById("maintenance-list");
-    list.innerHTML = "";
-
-    items.forEach(eq => {
-        const last = new Date(eq.letzte_wartung);
-        const interval = parseInt(eq.wartungsintervall);
-        const due = new Date(last);
-        due.setMonth(due.getMonth() + interval);
-        const overdueDays = Math.floor((new Date() - due) / (1000 * 60 * 60 * 24));
-        const li = document.createElement("li");
-        li.textContent = `${eq.name} – überfällig seit ${overdueDays} Tagen`;
-        list.appendChild(li);
-    });
-
-    modal.classList.remove("hidden");
 }
 
 function closeMaintenanceModal() {
     document.getElementById("maintenanceModal").classList.add("hidden");
 }
 
-// Event Listeners für Kacheln
 document.addEventListener('DOMContentLoaded', () => {
-    loadDashboard();
+    checkLogin();
+    setupTokenExpiryWatcher();
 
-    // Klick: Überfällige Ausleihen
+    const user = getUserInfo();
+    if (user) {
+        const infoEl = document.getElementById('user-info');
+        if (infoEl) {
+            infoEl.innerHTML = `
+                Angemeldet als <strong>${user.username}</strong> (${user.role})
+                <button onclick="logout()" style="margin-left: 10px;">Logout</button>
+            `;
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+    }
+
+    function toggleMenu() {
+        document.getElementById('main-nav').classList.toggle('show');
+    }
+
+    const apiMembers = 'https://tcs-manager-backend.onrender.com/api/members';
+    const apiEquipment = 'https://tcs-manager-backend.onrender.com/api/equipment';
+    const apiRentals = 'https://tcs-manager-backend.onrender.com/api/rentals/extended';
+
+    function loadDashboard() {
+        Promise.all([
+            apiFetch(apiMembers),
+            apiFetch(apiEquipment),
+            apiFetch(apiRentals)
+        ])
+        .then(([members, equipment, rentals]) => {
+            const activeMembers = members.filter(m => m.status === "aktiv").length;
+            const invalidTTU = members.filter(m => !m.ttu_gueltigkeit || new Date(m.ttu_gueltigkeit) < new Date()).length;
+
+            const overdueMaintenance = equipment.filter(eq => {
+                if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
+                const last = new Date(eq.letzte_wartung);
+                const due = new Date(last);
+                due.setDate(due.getDate() + parseInt(eq.wartungsintervall));
+                return due < new Date();
+            }).length;
+
+            const now = new Date();
+            const overdueRentals = rentals.filter(r => {
+                const due = new Date(r.rental_date);
+                due.setDate(due.getDate() + 14);
+                return due < now;
+            }).length;
+
+            document.getElementById('active-members').innerText = activeMembers;
+            document.getElementById('invalid-ttu').innerText = invalidTTU;
+            document.getElementById('overdue-maintenance').innerText = overdueMaintenance;
+            document.getElementById('overdue-rentals').innerText = overdueRentals;
+        })
+        .catch(error => {
+            console.error("Fehler beim Laden:", error);
+        });
+    }
+
+    function openModal(overdueItems) {
+        const modal = document.getElementById("overdueModal");
+        const list = document.getElementById("overdue-list");
+        list.innerHTML = "";
+
+        overdueItems.forEach(item => {
+            const due = new Date(item.rental_date);
+            due.setDate(due.getDate() + 14);
+            const daysOverdue = Math.floor((new Date() - due) / (1000 * 60 * 60 * 24));
+            const li = document.createElement("li");
+            li.textContent = `${item.equipment_name} – verliehen an ${item.member_name}, überfällig seit ${daysOverdue} Tagen`;
+            list.appendChild(li);
+        });
+
+        modal.classList.remove("hidden");
+    }
+
+    function openMaintenanceModal(items) {
+        const modal = document.getElementById("maintenanceModal");
+        const list = document.getElementById("maintenance-list");
+        list.innerHTML = "";
+
+        items.forEach(eq => {
+            const last = new Date(eq.letzte_wartung);
+            const interval = parseInt(eq.wartungsintervall);
+            const due = new Date(last);
+            due.setDate(due.getDate() + interval);
+            const overdueDays = Math.floor((new Date() - due) / (1000 * 60 * 60 * 24));
+            const li = document.createElement("li");
+            li.textContent = `${eq.name} – überfällig seit ${overdueDays} Tagen`;
+            list.appendChild(li);
+        });
+
+        modal.classList.remove("hidden");
+    }
+
+    function closeMaintenanceModal() {
+        document.getElementById("maintenanceModal").classList.add("hidden");
+    }
+
+    // Event Listener
     const overdueCard = document.querySelector('.card.overdue-rentals');
     if (overdueCard) {
         overdueCard.addEventListener('click', () => {
@@ -196,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Klick: Überfällige Wartungen
     const wartungCard = document.querySelector('.card.wartung');
     if (wartungCard) {
         wartungCard.addEventListener('click', () => {
@@ -205,14 +206,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const overdue = equipment.filter(eq => {
                         if (!eq.letzte_wartung || !eq.wartungsintervall) return false;
                         const last = new Date(eq.letzte_wartung);
-                        last.setMonth(last.getMonth() + parseInt(eq.wartungsintervall));
-                        return last < new Date();
+                        const due = new Date(last);
+                        due.setDate(due.getDate() + parseInt(eq.wartungsintervall));
+                        return due < new Date();
                     });
                     openMaintenanceModal(overdue);
                 })
                 .catch(err => console.error("Fehler beim Laden der Wartungsdaten:", err));
         });
     }
+
+    loadDashboard();
 });
 </script>
 
