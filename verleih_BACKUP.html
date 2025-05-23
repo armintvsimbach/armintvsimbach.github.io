@@ -9,18 +9,19 @@
 <body>
 
 <header>
-  <div class="header-container"><a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
-    <img src="Logo.png" alt="Vereinslogo" class="logo">
-    <h1>TC Simbach</h1>
-    </a><div class="burger" onclick="toggleMenu()">☰</div>
-  </div>
-  <nav id="main-nav">
-    <a href="index.html">Start</a>
-    <a href="verleih.html">Verleih</a>
-    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
-    <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="admin.html">Admin</a>
-  </nav>
+    <div class="header-container">
+        <img src="Logo.png" alt="Vereinslogo" class="logo">
+        <h1>TC Simbach</h1>
+    </div>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+
+    <nav id="main-nav">
+        <a href="index.html">Start</a>
+        <a href="verleih.html">Verleih</a>
+        <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+        <a href="equipment.html">Equipmentverwaltung</a>
+        <a href="admin.html">Admin</a>
+    </nav>
 </header>
 
 <main>
@@ -53,39 +54,40 @@
 <div class="modal" id="rentalModal" style="display:none;">
     <div class="modal-content">
         <h2 id="rental-modal-title">Neuen Verleih erfassen</h2>
-        <form id="rental-form" class="modern-form">
-            <div class="form-group">
-                <label for="r-member-search">Mitglied</label>
-                <div class="input-wrapper">
-                    <input type="text" id="r-member-search" placeholder="Mitglied suchen..." autocomplete="off" required>
-                    <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
-                    <input type="hidden" id="r-member-id">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="r-equipment-search">Equipment</label>
-                <div class="input-wrapper">
-                    <input type="text" id="r-equipment-search" placeholder="Equipment suchen..." autocomplete="off" required>
-                    <ul id="r-equipment-suggestions" class="autocomplete-suggestions"></ul>
-                    <input type="hidden" id="r-equipment-id">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="r-date">Verleihdatum</label>
-                <input type="date" id="r-date" required onchange="updateDueDateField()">
-            </div>
-
-            <div class="form-group">
-                <label for="r-due-date">Rückgabe bis</label>
-                <input type="text" id="r-due-date" readonly style="background-color:#eee;">
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Speichern</button>
-                <button type="button" onclick="closeRentalModal()" class="btn-secondary">Abbrechen</button>
-            </div>
+        <form id="rental-form">
+            <table style="width: 100%;">
+                <tr>
+                    <td>Mitglied:</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <input type="text" id="r-member-search" placeholder="Mitglied suchen..." autocomplete="off" required>
+                            <ul id="r-member-suggestions" class="autocomplete-suggestions"></ul>
+                            <input type="hidden" id="r-member-id">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Equipment:</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <input type="text" id="r-equipment-search" placeholder="Equipment suchen..." autocomplete="off" required>
+                            <ul id="r-equipment-suggestions" class="autocomplete-suggestions"></ul>
+                            <input type="hidden" id="r-equipment-id">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Verleihdatum:</td>
+                    <td><input type="date" id="r-date" required onchange="updateDueDateField()"></td>
+                </tr>
+                <tr>
+                    <td>Rückgabe bis:</td>
+                    <td><input type="text" id="r-due-date" readonly style="background-color:#eee;"></td>
+                </tr>
+            </table>
+            <br>
+            <button type="submit">Speichern</button>
+            <button type="button" onclick="closeRentalModal()">Abbrechen</button>
         </form>
     </div>
 </div>
