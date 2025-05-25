@@ -56,31 +56,41 @@
 <div class="modal" id="equipmentModal" style="display:none;">
   <div class="modal-content">
     <h2 id="modal-title">Neues Equipment</h2>
-    <form id="equipment-form">
-      <input type="hidden" id="eq-id">
-      <input type="hidden" id="eq-bild-base64">
-      <table style="width:100%;">
-        <tr><td>Name:</td><td><input type="text" id="eq-name" required></td></tr>
-        <tr><td>Bild:</td><td><input type="file" id="eq-bildfile" accept="image/*"><img id="existing-image" style="display:none;width:100px;margin-top:10px;"></td></tr>
-        <tr><td>Kategorie:</td><td><select id="eq-kategorie" required></select></td></tr>
-        <tr><td>Beschreibung:</td><td><input type="text" id="eq-beschreibung"></td></tr>
-        <tr><td>Größe:</td><td><input type="text" id="eq-groesse"></td></tr>
-        <tr><td>Letzte Wartung:</td><td><input type="date" id="eq-letztewartung"></td></tr>
-        <tr><td>Wartungsintervall (Monate):</td><td><input type="number" id="eq-wartungsintervall"></td></tr>
-        <tr><td>Status:</td><td>
-          <select id="eq-status">
-            <option>Aktiv</option>
-            <option>Inaktiv</option>
-            <option>Wartung</option>
-            <option>Eingelagert</option>
-            <option>Verschrottet</option>
-            <option>Schwund</option>
-          </select>
-        </td></tr>
-      </table>
-      <button type="submit">Speichern</button>
-      <button type="button" onclick="closeEquipmentModal()">Abbrechen</button>
-    </form>
+	<form id="equipment-form" class="equipment-form">
+	  <input type="hidden" id="eq-id">
+	  <input type="hidden" id="eq-bild-base64">
+
+	  <div class="form-group"><label for="eq-name">Name:</label><input type="text" id="eq-name" required></div>
+	  
+	  <div class="form-group">
+		<label for="eq-bildfile">Bild:</label>
+		<input type="file" id="eq-bildfile" accept="image/*">
+		<img id="existing-image" style="display:none;width:100px;margin-top:10px;">
+	  </div>
+
+	  <div class="form-group"><label for="eq-kategorie">Kategorie:</label><select id="eq-kategorie" required></select></div>
+	  <div class="form-group"><label for="eq-beschreibung">Beschreibung:</label><input type="text" id="eq-beschreibung"></div>
+	  <div class="form-group"><label for="eq-groesse">Größe:</label><input type="text" id="eq-groesse"></div>
+	  <div class="form-group"><label for="eq-letztewartung">Letzte Wartung:</label><input type="date" id="eq-letztewartung"></div>
+	  <div class="form-group"><label for="eq-wartungsintervall">Wartungsintervall (Monate):</label><input type="number" id="eq-wartungsintervall"></div>
+	  
+	  <div class="form-group">
+		<label for="eq-status">Status:</label>
+		<select id="eq-status">
+		  <option>Aktiv</option>
+		  <option>Inaktiv</option>
+		  <option>Wartung</option>
+		  <option>Eingelagert</option>
+		  <option>Verschrottet</option>
+		  <option>Schwund</option>
+		</select>
+	  </div>
+
+	  <div class="form-actions">
+		<button type="submit">Speichern</button>
+		<button type="button" onclick="closeEquipmentModal()">Abbrechen</button>
+	  </div>
+	</form>
   </div>
 </div>
 
