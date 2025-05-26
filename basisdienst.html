@@ -10,14 +10,14 @@
     main { padding: 20px; max-width: 1000px; margin: auto; }
     h1 { margin-bottom: 10px; }
     select, button { padding: 5px; margin: 5px 0; }
-    .week-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 20px;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #ccc;
-    }
+	.week-row {
+	  display: grid;
+	  grid-template-columns: 60% 40%;
+	  gap: 10px;
+	  align-items: center;
+	  padding: 10px 0;
+	  border-bottom: 1px solid #ccc;
+	}
     .week-label {
       white-space: nowrap;
       font-weight: bold;
@@ -32,6 +32,17 @@
     .empty-select {
       border: 2px solid red;
     }
+	@media (max-width: 600px) {
+	  .week-row {
+		grid-template-columns: 1fr;
+		gap: 5px;
+	  }
+
+	  .user-select {
+		width: 100%;
+	  }
+	}
+
   </style>
 </head>
 <body>
