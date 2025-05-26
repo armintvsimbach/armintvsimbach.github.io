@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mein Profil</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
+      <img src="Logo.png" alt="Vereinslogo" class="logo">
+      <h1>TC Simbach</h1>
+    </a>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+  </div>
+  <nav id="main-nav">
+    <a href="index.html">Start</a>
+    <a href="verleih.html">Verleih</a>
+    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+    <a href="equipment.html">Equipmentverwaltung</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main>
+  <h2>Mein Profil</h2>
+  <div class="member-form">
+    <div class="form-group">
+      <label>Benutzername</label>
+      <input type="text" id="username" disabled>
+    </div>
+    <div class="form-group">
+      <label>Emailadresse</label>
+      <input type="email" id="email">
+    </div>
+    <div class="form-group">
+      <label>Rolle</label>
+      <input type="text" id="role" disabled>
+    </div>
+    <div class="form-group">
+      <label>Neues Passwort</label>
+      <input type="password" id="new-password">
+    </div>
+    <div class="form-actions">
+      <button onclick="saveChanges()">Änderungen speichern</button>
+    </div>
+  </div>
+</main>
+
+<script src="shared.js"></script>
+<script>
+checkLogin();
+setupTokenExpiryWatcher();
+
+function toggleMenu() {
+  document.getElementById('main-nav').classList.toggle('show');
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const user = getUserInfo();
+  if (!user) return;
+
+  const token = localStorage.getItem("token");
+
+  fetch(`https://tcs-manager-backend.onrender.com/api/users`, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(res => res.json())
+  .then(users => {
+    const current = users.find(u => u.id === user.id);
+    if (!current) return;
+
+    document.getElementById('username').value = current.username;
+    document.getElementById('email').value = current.email;
+    document.getElementById('role').value = current.role;
+  });
+});
+
+
+function saveChanges() {
+  const user = getUserInfo();
+  const newEmail = document.getElementById('email').value;
+  const newPassword = document.getElementById('new-password').value;
+
+  const token = localStorage.getItem("token");
+
+  // Email ändern
+  fetch(`https://tcs-manager-backend.onrender.com/api/users/${user.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      username: user.username,
+      email: newEmail,
+      role: user.role
+    })
+  }).then(() => {
+    alert("Email aktualisiert.");
+  });
+
+  // Passwort ändern
+  if (newPassword) {
+    fetch("https://tcs-manager-backend.onrender.com/api/reset-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ id: user.id, password: newPassword })
+    }).then(() => {
+      alert("Passwort aktualisiert.");
+    });
+  }
+}
+</script>
+
+</body>
+</html>

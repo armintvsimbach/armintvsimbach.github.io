@@ -93,10 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (user) {
         const infoEl = document.getElementById('user-info');
         if (infoEl) {
-            infoEl.innerHTML = `
-                Angemeldet als <strong>${user.username}</strong> (${user.role})
-                <button onclick="logout()" style="margin-left: 10px;">Logout</button>
-            `;
+			infoEl.innerHTML = `
+				Angemeldet als <a href="profil.html" style="color: white; font-weight: bold;">${user.username}</a> (${user.role})
+				<button onclick="logout()" style="margin-left: 10px;">Logout</button>
+			`;
         }
     }
 
