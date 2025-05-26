@@ -109,9 +109,12 @@ setupTokenExpiryWatcher();
 function checkLoginAndLoad() {
   checkLogin();
   const user = getUserInfo();
-  if (user) {
-    document.getElementById('user-info').innerHTML = `Angemeldet als <strong>${user.username}</strong> (${user.role}) <button onclick="logout()">Logout</button>`;
-  }
+	if (user) {
+	  document.getElementById('user-info').innerHTML = `
+		Angemeldet als <a href="profil.html" style="color: black; font-weight: bold;">${user.username}</a> (${user.role})
+		<button onclick="logout()" style="margin-left: 10px;">Logout</button>
+	  `;
+	}
   loadData();
 }
 
