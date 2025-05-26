@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basisdienst Planung</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; }
+    main { padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    select, button { padding: 5px; margin: 5px 0; }
+    .week-row { border-bottom: 1px solid #ccc; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+    .week-label { min-width: 200px; }
+    .user-select { flex: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
+      <img src="Logo.png" alt="Vereinslogo" class="logo">
+      <h1>TC Simbach</h1>
+    </a>
+    <div class="burger" onclick="toggleMenu()">☰</div>
+  </div>
+  <nav id="main-nav">
+    <a href="index.html">Start</a>
+    <a href="verleih.html">Verleih</a>
+    <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
+    <a href="equipment.html">Equipmentverwaltung</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Basisdienst Planung</h1>
+  <label for="year">Jahr:</label>
+  <select id="year" onchange="loadWeeks()"></select>
+  <div id="weeks"></div>
+</main>
+
+<script>
+  const API_BASE = "https://tcs-manager-backend.onrender.com/api";
+
+  async function initYearSelect() {
+    const select = document.getElementById("year");
+    const response = await fetch(`${API_BASE}/basisdienst/jahre`);
+    const years = await response.json();
+
+    const currentYear = new Date().getFullYear();
+    const futureYears = [currentYear + 1, currentYear + 2];
+    const allYears = [...new Set([...years, currentYear, ...futureYears])].sort((a, b) => a - b);
+
+    allYears.forEach(y => {
+      const opt = document.createElement("option");
+      opt.value = y;
+      opt.textContent = y;
+      if (y === currentYear) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    loadWeeks();
+  }
+
+  async function loadWeeks() {
+    const year = document.getElementById("year").value;
+    const container = document.getElementById("weeks");
+    container.innerHTML = "";
+
+    let response = await fetch(`${API_BASE}/basisdienst/${year}`);
+    let data = await response.json();
+
+    if (!data || data.length === 0) {
+      const create = confirm(`Für das Jahr ${year} existieren noch keine Kalenderwochen. Möchtest du sie jetzt anlegen?`);
+      if (create) {
+        const res = await fetch(`${API_BASE}/basisdienst/${year}/generate`, { method: 'POST' });
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          alert("Fehler beim Anlegen der Kalenderwochen.");
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+
+    const userResponse = await fetch(`${API_BASE}/users`);
+    const users = await userResponse.json();
+
+    data.forEach((w, index) => {
+      const row = document.createElement("div");
+      row.className = "week-row";
+
+      const label = document.createElement("div");
+      label.className = "week-label";
+      label.textContent = `KW ${w.kw}: ${w.von} bis ${w.bis}`;
+
+      const select = document.createElement("select");
+      select.className = "user-select";
+      users.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.id;
+        opt.textContent = u.name;
+        if (w.user_id === u.id) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      select.onchange = () => {
+        fetch(`${API_BASE}/basisdienst/${w.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: select.value })
+        }).then(r => {
+          if (!r.ok) alert("Fehler beim Speichern der Zuweisung");
+        });
+      };
+
+      row.appendChild(label);
+      row.appendChild(select);
+      container.appendChild(row);
+    });
+  }
+
+  function toggleMenu() {
+    document.getElementById("main-nav").classList.toggle("show");
+  }
+
+  initYearSelect();
+</script>
+</body>
+</html>
