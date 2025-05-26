@@ -39,6 +39,9 @@
     #search { width: 90%; max-width: 100%; box-sizing: border-box; }
     #titleEditContainer { display: none; margin-bottom: 10px; }
     #titleEdit { width: 100%; padding: 4px; }
+    select#page-selector option {
+      font-family: monospace;
+    }
     @media (max-width: 768px) {
       aside { display: none; position: absolute; z-index: 100; height: 100vh; }
       aside.show { display: block; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
@@ -89,20 +92,6 @@
   </main>
 </div>
 
-<div id="createPageModal" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); justify-content: center; align-items: center;">
-  <div style="background:white; padding:20px; border-radius:8px; min-width:300px;">
-    <h3>Neue Wiki-Seite</h3>
-    <label>Titel:<br><input id="newPageTitle" style="width:100%"></label><br><br>
-    <label><input type="radio" name="pageType" value="root" checked> Hauptseite</label><br>
-    <label><input type="radio" name="pageType" value="child"> Unterseite</label><br>
-    <label id="parentSelectLabel" style="display:none;">Parent Seite:<br>
-      <select id="parentPageSelect" style="width:100%"></select>
-    </label><br>
-    <button onclick="createPage()">Erstellen</button>
-    <button onclick="closeCreatePageModal()">Abbrechen</button>
-  </div>
-</div>
-
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
@@ -128,7 +117,6 @@ function fetchPages() {
       pages = data;
       renderPageTree();
       fillPageSelector();
-      fillParentSelect();
       const first = pages[0];
       if (first) loadPage(first.id);
     });
@@ -154,13 +142,20 @@ function renderPageBranch(page, container, depth) {
 function fillPageSelector() {
   const sel = document.getElementById("page-selector");
   sel.innerHTML = "";
-  pages.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.title;
-    sel.appendChild(opt);
-  });
-  sel.onchange = () => loadPage(sel.value);
+  const rootPages = pages.filter(p => !p.parent_id);
+  rootPages.forEach(p => addPageOption(p, sel, 0));
+}
+
+function addPageOption(page, sel, depth) {
+  const opt = document.createElement("option");
+  opt.value = page.id;
+  let prefix = "";
+  if (depth === 1) prefix = "- ";
+  else if (depth >= 2) prefix = "-- ";
+  opt.textContent = `${prefix}${page.title}`;
+  sel.appendChild(opt);
+  const children = pages.filter(p => p.parent_id === page.id);
+  children.forEach(child => addPageOption(child, sel, depth + 1));
 }
 
 function loadPage(id) {
@@ -216,51 +211,47 @@ function savePage() {
     if (page) page.title = title;
     renderPageTree();
     fillPageSelector();
-    fillParentSelect();
     alert("Seite gespeichert");
     showPreview();
   });
 }
 
 function createPageDialog() {
-  document.getElementById('createPageModal').style.display = 'flex';
-}
-
-function closeCreatePageModal() {
-  document.getElementById('createPageModal').style.display = 'none';
-}
-
-function createPage() {
-  const title = document.getElementById("newPageTitle").value;
-  const type = document.querySelector('input[name="pageType"]:checked').value;
-  const parentId = (type === "child") ? document.getElementById("parentPageSelect").value : null;
-  if (!title) return;
-  fetch(`${API_BASE}/wiki`, {
-    method: 'POST',
-    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, content: '', parent_id: parentId })
-  })
-  .then(res => res.json())
-  .then(newPage => {
-    pages.push(newPage);
-    renderPageTree();
-    fillPageSelector();
-    fillParentSelect();
-    loadPage(newPage.id);
-    closeCreatePageModal();
+  const modal = document.createElement("div");
+  modal.innerHTML = `
+    <div class="modal" style="position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); display:flex; justify-content: center; align-items: center;">
+      <div style="background:white; padding:20px; border-radius:8px; min-width:300px;">
+        <h3>Neue Wiki-Seite</h3>
+        <label>Titel:<br><input id="newPageTitle" style="width:100%"></label><br><br>
+        <label><input type="radio" name="pageType" value="root" checked> Hauptseite</label><br>
+        <label><input type="radio" name="pageType" value="child"> Unterseite</label><br>
+        <label id="parentSelectLabel" style="display:none;">Parent Seite:<br>
+          <select id="parentPageSelect" style="width:100%"></select>
+        </label><br>
+        <button onclick="createPage()">Erstellen</button>
+        <button onclick="document.body.removeChild(this.closest('.modal'))">Abbrechen</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  fillParentSelect();
+  document.querySelectorAll('input[name="pageType"]').forEach(el => {
+    el.addEventListener('change', () => {
+      const isChild = document.querySelector('input[name="pageType"]:checked').value === 'child';
+      document.getElementById("parentSelectLabel").style.display = isChild ? 'block' : 'none';
+    });
   });
 }
 
 function fillParentSelect() {
   const parentSelect = document.getElementById("parentPageSelect");
   parentSelect.innerHTML = "";
-  pages.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.title;
-    parentSelect.appendChild(opt);
-  });
+  const rootPages = pages.filter(p => !p.parent_id);
+  rootPages.forEach(p => addPageOption(p, parentSelect, 0));
 }
+
+document.getElementById("search").addEventListener("input", filterPages);
+document.addEventListener("DOMContentLoaded", fetchPages);
 
 function filterPages() {
   const query = document.getElementById("search").value.toLowerCase();
@@ -273,16 +264,6 @@ function filterPages() {
   const rootPages = matchedPages.filter(p => !p.parent_id);
   rootPages.forEach(p => renderPageBranch(p, tree, 0));
 }
-
-document.querySelectorAll('input[name="pageType"]').forEach(el => {
-  el.addEventListener('change', () => {
-    const isChild = document.querySelector('input[name="pageType"]:checked').value === 'child';
-    document.getElementById("parentSelectLabel").style.display = isChild ? 'block' : 'none';
-  });
-});
-
-document.getElementById("search").addEventListener("input", filterPages);
-document.addEventListener("DOMContentLoaded", fetchPages);
 </script>
 </body>
 </html>
