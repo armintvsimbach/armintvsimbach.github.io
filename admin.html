@@ -97,7 +97,7 @@
         <div class="table-wrapper">
             <table id="statistik-table">
                 <thead>
-                    <tr><th>Equipment</th><th>Anzahl Verleihungen</th></tr>
+                    <tr><th>Equipment</th><th>Beschreibung</th><th>Anzahl Verleihungen</th></tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -340,7 +340,11 @@ function loadStatistik() {
         tbody.innerHTML = "";
         data.forEach(row => {
             const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${row.equipment_name}</td><td>${row.count}</td>`;
+                  tr.innerHTML = `
+					<td>${row.equipment_name}</td>
+					<td>${row.beschreibung || '-'}</td>
+					<td>${row.count}</td>
+				  `;
             tbody.appendChild(tr);
         });
         // Für Excel Export zwischenspeichern
