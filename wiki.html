@@ -18,7 +18,7 @@
       border-right: 1px solid #ccc;
     }
     aside h3 { margin-top: 0; }
-    main { flex: 1; padding: 20px; overflow-y: auto; }
+    main { flex: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; }
     .page-link { cursor: pointer; margin: 5px 0; display: block; }
     .tree-indent { margin-left: 20px; }
     .active { font-weight: bold; }
@@ -36,6 +36,9 @@
     }
     .editor-container { display: none; }
     .preview-container { display: block; }
+    #search { width: 90%; max-width: 100%; box-sizing: border-box; }
+    #titleEditContainer { display: none; margin-bottom: 10px; }
+    #titleEdit { width: 100%; padding: 4px; }
     @media (max-width: 768px) {
       aside { display: none; position: absolute; z-index: 100; height: 100vh; }
       aside.show { display: block; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
@@ -64,7 +67,7 @@
 <div class="wiki-container">
   <aside id="sidebar">
     <h3>Wiki Seiten</h3>
-    <input type="text" id="search" placeholder="Suche..." style="width: 100%; margin-bottom: 10px;">
+    <input type="text" id="search" placeholder="Suche...">
     <div id="page-tree"></div>
     <button onclick="createPageDialog()">➕ Neue Seite</button>
   </aside>
@@ -75,6 +78,10 @@
       <button onclick="toggleEditMode()" id="editToggle">✏️ Bearbeiten</button>
       <button onclick="savePage()" id="saveButton" style="display:none;">💾 Speichern</button>
     </div>
+    <div id="titleEditContainer">
+      <label for="titleEdit">Seitentitel:</label>
+      <input type="text" id="titleEdit">
+    </div>
     <div id="preview" class="preview-container"></div>
     <div class="editor-container" id="editorContainer">
       <textarea id="editor"></textarea>
@@ -82,7 +89,6 @@
   </main>
 </div>
 
-<!-- Dialog zur Seitenerstellung -->
 <div id="createPageModal" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); justify-content: center; align-items: center;">
   <div style="background:white; padding:20px; border-radius:8px; min-width:300px;">
     <h3>Neue Wiki-Seite</h3>
@@ -99,7 +105,6 @@
 
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="shared.js"></script>
 <script>
 let pages = [];
 let currentPageId = null;
@@ -110,6 +115,10 @@ const API_BASE = "https://tcs-manager-backend.onrender.com/api";
 function toggleMenu() {
   document.getElementById('main-nav').classList.toggle('show');
   document.getElementById('sidebar').classList.toggle('show');
+}
+
+function authHeaders() {
+  return { 'Authorization': 'Bearer ' + localStorage.getItem("token") };
 }
 
 function fetchPages() {
@@ -160,13 +169,14 @@ function loadPage(id) {
     .then(page => {
       currentPageId = page.id;
       document.getElementById("page-selector").value = page.id;
+      document.getElementById("titleEdit").value = page.title;
       if (!easyMDE) {
-		easyMDE = new EasyMDE({
-		  element: document.getElementById("editor"),
-		  spellChecker: false,
-		  autoDownloadFontAwesome: true, // oder entferne diesen Parameter ganz
-		  placeholder: "Schreibe deine Wiki-Seite hier..."
-		});
+        easyMDE = new EasyMDE({
+          element: document.getElementById("editor"),
+          spellChecker: false,
+          autoDownloadFontAwesome: true,
+          placeholder: "Schreibe deine Wiki-Seite hier..."
+        });
       }
       easyMDE.value(page.content);
       showPreview();
@@ -179,6 +189,7 @@ function showPreview() {
   document.getElementById("editorContainer").style.display = "none";
   document.getElementById("saveButton").style.display = "none";
   document.getElementById("editToggle").style.display = "inline-block";
+  document.getElementById("titleEditContainer").style.display = "none";
   const content = easyMDE.value();
   document.getElementById("preview").innerHTML = marked.parse(content);
 }
@@ -189,16 +200,23 @@ function toggleEditMode() {
   document.getElementById("editorContainer").style.display = "block";
   document.getElementById("saveButton").style.display = "inline-block";
   document.getElementById("editToggle").style.display = "none";
+  document.getElementById("titleEditContainer").style.display = "block";
 }
 
 function savePage() {
   const content = easyMDE.value();
-  const title = pages.find(p => p.id == currentPageId).title;
+  const title = document.getElementById("titleEdit").value.trim();
+  if (!title) return alert("Titel darf nicht leer sein.");
   fetch(`${API_BASE}/wiki/${currentPageId}`, {
     method: 'PUT',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, content })
   }).then(() => {
+    const page = pages.find(p => p.id == currentPageId);
+    if (page) page.title = title;
+    renderPageTree();
+    fillPageSelector();
+    fillParentSelect();
     alert("Seite gespeichert");
     showPreview();
   });
@@ -217,7 +235,6 @@ function createPage() {
   const type = document.querySelector('input[name="pageType"]:checked').value;
   const parentId = (type === "child") ? document.getElementById("parentPageSelect").value : null;
   if (!title) return;
-
   fetch(`${API_BASE}/wiki`, {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
@@ -245,6 +262,18 @@ function fillParentSelect() {
   });
 }
 
+function filterPages() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const tree = document.getElementById("page-tree");
+  tree.innerHTML = "";
+  const matchedPages = pages.filter(p =>
+    p.title.toLowerCase().includes(query) ||
+    (p.content && p.content.toLowerCase().includes(query))
+  );
+  const rootPages = matchedPages.filter(p => !p.parent_id);
+  rootPages.forEach(p => renderPageBranch(p, tree, 0));
+}
+
 document.querySelectorAll('input[name="pageType"]').forEach(el => {
   el.addEventListener('change', () => {
     const isChild = document.querySelector('input[name="pageType"]:checked').value === 'child';
@@ -254,19 +283,6 @@ document.querySelectorAll('input[name="pageType"]').forEach(el => {
 
 document.getElementById("search").addEventListener("input", filterPages);
 document.addEventListener("DOMContentLoaded", fetchPages);
-
-function authHeaders() {
-  return { 'Authorization': 'Bearer ' + localStorage.getItem("token") };
-}
-
-function filterPages() {
-  const query = document.getElementById("search").value.toLowerCase();
-  const tree = document.getElementById("page-tree");
-  tree.querySelectorAll(".page-link").forEach(link => {
-    const text = link.textContent.toLowerCase();
-    link.style.display = text.includes(query) ? "block" : "none";
-  });
-}
 </script>
 </body>
 </html>
