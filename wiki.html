@@ -6,6 +6,7 @@
   <title>Vereins-Wiki</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <style>
     body { display: flex; flex-direction: column; margin: 0; }
     .wiki-container { display: flex; flex: 1; overflow: hidden; }
@@ -21,7 +22,20 @@
     .page-link { cursor: pointer; margin: 5px 0; display: block; }
     .tree-indent { margin-left: 20px; }
     .active { font-weight: bold; }
-    .top-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .top-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+    .editor-toolbar, .editor-toolbar.fullscreen {
+      background: #f0f0f0 !important;
+      border: 1px solid #ccc;
+    }
+    .editor-toolbar button {
+      color: #333 !important;
+    }
+    .editor-statusbar {
+      background: #fafafa;
+      border-top: 1px solid #ccc;
+    }
+    .editor-container { display: none; }
+    .preview-container { display: block; }
     @media (max-width: 768px) {
       aside { display: none; position: absolute; z-index: 100; height: 100vh; }
       aside.show { display: block; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
@@ -52,28 +66,46 @@
     <h3>Wiki Seiten</h3>
     <input type="text" id="search" placeholder="Suche..." style="width: 100%; margin-bottom: 10px;">
     <div id="page-tree"></div>
-    <button onclick="createPage()">➕ Neue Seite</button>
+    <button onclick="createPageDialog()">➕ Neue Seite</button>
   </aside>
 
   <main>
     <div class="top-bar">
       <select id="page-selector"></select>
-      <button onclick="savePage()">💾 Speichern</button>
+      <button onclick="toggleEditMode()" id="editToggle">✏️ Bearbeiten</button>
+      <button onclick="savePage()" id="saveButton" style="display:none;">💾 Speichern</button>
     </div>
-    <textarea id="editor"></textarea>
+    <div id="preview" class="preview-container"></div>
+    <div class="editor-container" id="editorContainer">
+      <textarea id="editor"></textarea>
+    </div>
   </main>
 </div>
 
+<!-- Dialog zur Seitenerstellung -->
+<div id="createPageModal" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); justify-content: center; align-items: center;">
+  <div style="background:white; padding:20px; border-radius:8px; min-width:300px;">
+    <h3>Neue Wiki-Seite</h3>
+    <label>Titel:<br><input id="newPageTitle" style="width:100%"></label><br><br>
+    <label><input type="radio" name="pageType" value="root" checked> Hauptseite</label><br>
+    <label><input type="radio" name="pageType" value="child"> Unterseite</label><br>
+    <label id="parentSelectLabel" style="display:none;">Parent Seite:<br>
+      <select id="parentPageSelect" style="width:100%"></select>
+    </label><br>
+    <button onclick="createPage()">Erstellen</button>
+    <button onclick="closeCreatePageModal()">Abbrechen</button>
+  </div>
+</div>
+
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="shared.js"></script>
 <script>
 let pages = [];
 let currentPageId = null;
-let easyMDE = new EasyMDE({
-  element: document.getElementById("editor"),
-  spellChecker: false,
-  placeholder: "Schreibe deine Wiki-Seite hier..."
-});
+let editMode = false;
+let easyMDE;
+const API_BASE = "https://tcs-manager-backend.onrender.com/api";
 
 function toggleMenu() {
   document.getElementById('main-nav').classList.toggle('show');
@@ -81,12 +113,13 @@ function toggleMenu() {
 }
 
 function fetchPages() {
-  fetch('/api/wiki', { headers: authHeaders() })
+  fetch(`${API_BASE}/wiki`, { headers: authHeaders() })
     .then(res => res.json())
     .then(data => {
       pages = data;
       renderPageTree();
       fillPageSelector();
+      fillParentSelect();
       const first = pages[0];
       if (first) loadPage(first.id);
     });
@@ -122,30 +155,70 @@ function fillPageSelector() {
 }
 
 function loadPage(id) {
-  fetch(`/api/wiki/${id}`, { headers: authHeaders() })
+  fetch(`${API_BASE}/wiki/${id}`, { headers: authHeaders() })
     .then(res => res.json())
     .then(page => {
       currentPageId = page.id;
       document.getElementById("page-selector").value = page.id;
+      if (!easyMDE) {
+		easyMDE = new EasyMDE({
+		  element: document.getElementById("editor"),
+		  spellChecker: false,
+		  autoDownloadFontAwesome: true, // oder entferne diesen Parameter ganz
+		  placeholder: "Schreibe deine Wiki-Seite hier..."
+		});
+      }
       easyMDE.value(page.content);
+      showPreview();
     });
+}
+
+function showPreview() {
+  editMode = false;
+  document.getElementById("preview").style.display = "block";
+  document.getElementById("editorContainer").style.display = "none";
+  document.getElementById("saveButton").style.display = "none";
+  document.getElementById("editToggle").style.display = "inline-block";
+  const content = easyMDE.value();
+  document.getElementById("preview").innerHTML = marked.parse(content);
+}
+
+function toggleEditMode() {
+  editMode = true;
+  document.getElementById("preview").style.display = "none";
+  document.getElementById("editorContainer").style.display = "block";
+  document.getElementById("saveButton").style.display = "inline-block";
+  document.getElementById("editToggle").style.display = "none";
 }
 
 function savePage() {
   const content = easyMDE.value();
   const title = pages.find(p => p.id == currentPageId).title;
-  fetch(`/api/wiki/${currentPageId}`, {
+  fetch(`${API_BASE}/wiki/${currentPageId}`, {
     method: 'PUT',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, content })
-  }).then(() => alert("Seite gespeichert"));
+  }).then(() => {
+    alert("Seite gespeichert");
+    showPreview();
+  });
+}
+
+function createPageDialog() {
+  document.getElementById('createPageModal').style.display = 'flex';
+}
+
+function closeCreatePageModal() {
+  document.getElementById('createPageModal').style.display = 'none';
 }
 
 function createPage() {
-  const title = prompt("Seitentitel eingeben:");
+  const title = document.getElementById("newPageTitle").value;
+  const type = document.querySelector('input[name="pageType"]:checked').value;
+  const parentId = (type === "child") ? document.getElementById("parentPageSelect").value : null;
   if (!title) return;
-  const parentId = currentPageId || null;
-  fetch('/api/wiki', {
+
+  fetch(`${API_BASE}/wiki`, {
     method: 'POST',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, content: '', parent_id: parentId })
@@ -155,9 +228,32 @@ function createPage() {
     pages.push(newPage);
     renderPageTree();
     fillPageSelector();
+    fillParentSelect();
     loadPage(newPage.id);
+    closeCreatePageModal();
   });
 }
+
+function fillParentSelect() {
+  const parentSelect = document.getElementById("parentPageSelect");
+  parentSelect.innerHTML = "";
+  pages.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.title;
+    parentSelect.appendChild(opt);
+  });
+}
+
+document.querySelectorAll('input[name="pageType"]').forEach(el => {
+  el.addEventListener('change', () => {
+    const isChild = document.querySelector('input[name="pageType"]:checked').value === 'child';
+    document.getElementById("parentSelectLabel").style.display = isChild ? 'block' : 'none';
+  });
+});
+
+document.getElementById("search").addEventListener("input", filterPages);
+document.addEventListener("DOMContentLoaded", fetchPages);
 
 function authHeaders() {
   return { 'Authorization': 'Bearer ' + localStorage.getItem("token") };
@@ -171,9 +267,6 @@ function filterPages() {
     link.style.display = text.includes(query) ? "block" : "none";
   });
 }
-
-document.getElementById("search").addEventListener("input", filterPages);
-document.addEventListener("DOMContentLoaded", fetchPages);
 </script>
 </body>
 </html>
