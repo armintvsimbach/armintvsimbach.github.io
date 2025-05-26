@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Basisdienst Planung</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <style>
     body { font-family: Arial, sans-serif; margin: 0; }
-    main { padding: 20px; }
+    main { padding: 20px; max-width: 1000px; margin: auto; }
     h1 { margin-bottom: 10px; }
     select, button { padding: 5px; margin: 5px 0; }
-    .week-row { border-bottom: 1px solid #ccc; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-    .week-label { min-width: 200px; }
-    .user-select { flex: 1; }
+    .week-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #ccc;
+    }
+    .week-label {
+      white-space: nowrap;
+      font-weight: bold;
+    }
+    .user-select {
+      min-width: max-content;
+      padding: 5px;
+    }
+    .highlight {
+      background-color: #ffffcc;
+    }
+    .empty-select {
+      border: 2px solid red;
+    }
   </style>
 </head>
 <body>
@@ -20,7 +39,7 @@
 <header>
   <div class="header-container">
     <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
-      <img src="Logo.png" alt="Vereinslogo" class="logo">
+      <img src="Logo.png" alt="Vereinslogo" class="logo" />
       <h1>TC Simbach</h1>
     </a>
     <div class="burger" onclick="toggleMenu()">☰</div>
@@ -30,6 +49,8 @@
     <a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
     <a href="equipment.html">Equipmentverwaltung</a>
+	<a href="basisdienst.html">Basisdienst</a>
+	<a href="wiki.html">Wiki</a>
     <a href="admin.html">Admin</a>
   </nav>
 </header>
@@ -44,9 +65,45 @@
 <script>
   const API_BASE = "https://tcs-manager-backend.onrender.com/api";
 
+  function authHeaders() {
+    return {
+      'Authorization': 'Bearer ' + localStorage.getItem('token')
+    };
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString('de-DE');
+  }
+
+  // Neue ISO-Wochenberechnung (inkl. Jahr)
+  function getISOWeekInfo(date) {
+    const d = new Date(date.getTime());
+    d.setHours(0, 0, 0, 0);
+
+    const day = d.getDay() || 7; // Montag=1, Sonntag=7
+    d.setDate(d.getDate() + 4 - day); // auf Donnerstag der aktuellen Woche
+
+    const yearStart = new Date(d.getFullYear(), 0, 4);
+    const firstDay = (yearStart.getDay() + 6) % 7;
+    yearStart.setDate(yearStart.getDate() - firstDay + 3);
+
+    const weekNo = 1 + Math.floor((d - yearStart) / (7 * 86400000));
+    return {
+      year: d.getFullYear(),
+      week: weekNo
+    };
+  }
+
   async function initYearSelect() {
     const select = document.getElementById("year");
-    const response = await fetch(`${API_BASE}/basisdienst/jahre`);
+    const response = await fetch(`${API_BASE}/basisdienst/jahre`, {
+      headers: authHeaders()
+    });
+    if (!response.ok) {
+      alert("Fehler beim Laden der Jahre.");
+      return;
+    }
+
     const years = await response.json();
 
     const currentYear = new Date().getFullYear();
@@ -69,13 +126,23 @@
     const container = document.getElementById("weeks");
     container.innerHTML = "";
 
-    let response = await fetch(`${API_BASE}/basisdienst/${year}`);
+    const response = await fetch(`${API_BASE}/basisdienst/${year}`, {
+      headers: authHeaders()
+    });
+    if (!response.ok) {
+      alert("Fehler beim Laden der Wochen.");
+      return;
+    }
+
     let data = await response.json();
 
     if (!data || data.length === 0) {
       const create = confirm(`Für das Jahr ${year} existieren noch keine Kalenderwochen. Möchtest du sie jetzt anlegen?`);
       if (create) {
-        const res = await fetch(`${API_BASE}/basisdienst/${year}/generate`, { method: 'POST' });
+        const res = await fetch(`${API_BASE}/basisdienst/${year}/generate`, {
+          method: 'POST',
+          headers: authHeaders()
+        });
         if (res.ok) {
           data = await res.json();
         } else {
@@ -87,34 +154,76 @@
       }
     }
 
-    const userResponse = await fetch(`${API_BASE}/users`);
-    const users = await userResponse.json();
+    const userResponse = await fetch(`${API_BASE}/users`, {
+      headers: authHeaders()
+    });
+	const users = await userResponse.json();
+	users.sort((a, b) => {
+	  const nameA = `${a.vorname || ''} ${a.name || ''}`.toLowerCase();
+	  const nameB = `${b.vorname || ''} ${b.name || ''}`.toLowerCase();
+	  return nameA.localeCompare(nameB, 'de');
+	});
 
-    data.forEach((w, index) => {
+    if (!Array.isArray(users) || users.length === 0) {
+      const message = document.createElement("div");
+      message.textContent = "⚠️ Keine Benutzer gefunden.";
+      container.appendChild(message);
+      return;
+    }
+
+    const infoToday = getISOWeekInfo(new Date());
+
+    data.forEach(w => {
       const row = document.createElement("div");
       row.className = "week-row";
 
+      const infoWeek = getISOWeekInfo(new Date(w.von));
+      if (infoWeek.year === infoToday.year && infoWeek.week === infoToday.week) {
+        row.classList.add("highlight");
+      }
+
       const label = document.createElement("div");
       label.className = "week-label";
-      label.textContent = `KW ${w.kw}: ${w.von} bis ${w.bis}`;
+      label.textContent = `KW ${infoWeek.week}: ${formatDate(w.von)} bis ${formatDate(w.bis)}`;
 
       const select = document.createElement("select");
       select.className = "user-select";
+
+      const noUserOption = document.createElement("option");
+      noUserOption.textContent = "– niemand zugewiesen –";
+      noUserOption.value = "";
+      select.appendChild(noUserOption);
+
       users.forEach(u => {
         const opt = document.createElement("option");
         opt.value = u.id;
-        opt.textContent = u.name;
+        opt.textContent = `${u.vorname || ''} ${u.name || ''}`.trim() || u.username || `Benutzer ${u.id}`;
+		opt.title = u.username;
         if (w.user_id === u.id) opt.selected = true;
         select.appendChild(opt);
       });
 
+      if (!w.user_id) {
+        select.classList.add("empty-select");
+        noUserOption.selected = true;
+      }
+
       select.onchange = () => {
+        const newUserId = select.value || null;
         fetch(`${API_BASE}/basisdienst/${w.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: select.value })
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: newUserId })
         }).then(r => {
-          if (!r.ok) alert("Fehler beim Speichern der Zuweisung");
+          if (!r.ok) {
+            alert("Fehler beim Speichern der Zuweisung");
+          } else {
+            if (!newUserId) {
+              select.classList.add("empty-select");
+            } else {
+              select.classList.remove("empty-select");
+            }
+          }
         });
       };
 

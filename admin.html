@@ -20,6 +20,7 @@
     <a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
     <a href="equipment.html">Equipmentverwaltung</a>
+	<a href="basisdienst.html">Basisdienst</a>
 	<a href="wiki.html">Wiki</a>
     <a href="admin.html">Admin</a>
   </nav>
@@ -65,15 +66,29 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('editUserModal')">X</span>
         <h3 id="editUserTitle">Benutzer bearbeiten</h3>
-        <form id="edit-user-form">
-            <input type="hidden" id="edit-user-id">
-            <label>Benutzername:<input type="text" id="edit-username" required></label>
-            <label>Email:<input type="email" id="edit-email" required></label>
-            <label>Rolle:<select id="edit-role"><option>benutzer</option><option>ausbilder</option><option>administrator</option></select></label>
-            <label>Status:<select id="edit-status"><option value="true">Aktiv</option><option value="false">Gesperrt</option></select></label>
-            <label id="password-field" style="display:none;">Passwort:<input type="text" id="edit-password"></label>
-            <button type="submit">Speichern</button>
-        </form>
+<!-- Ergänze im Benutzerformular diese beiden neuen Felder -->
+	<form id="edit-user-form">
+		<input type="hidden" id="edit-user-id">
+		<label>Benutzername:<input type="text" id="edit-username" required></label>
+		<label>Email:<input type="email" id="edit-email" required></label>
+		<label>Vorname:<input type="text" id="edit-vorname" required></label>
+		<label>Name:<input type="text" id="edit-name" required></label>
+		<label>Rolle:
+			<select id="edit-role">
+				<option>benutzer</option>
+				<option>ausbilder</option>
+				<option>administrator</option>
+			</select>
+		</label>
+		<label>Status:
+			<select id="edit-status">
+				<option value="true">Aktiv</option>
+				<option value="false">Gesperrt</option>
+			</select>
+		</label>
+		<label id="password-field" style="display:none;">Passwort:<input type="text" id="edit-password"></label>
+		<button type="submit">Speichern</button>
+	</form>
     </div>
 </div>
 
@@ -249,6 +264,8 @@ function editUser(user) {
     document.getElementById('edit-user-id').value = user.id;
     document.getElementById('edit-username').value = user.username;
     document.getElementById('edit-email').value = user.email;
+    document.getElementById('edit-vorname').value = user.vorname || '';
+    document.getElementById('edit-name').value = user.name || '';
     document.getElementById('edit-role').value = user.role;
     document.getElementById('edit-status').value = user.active;
     document.getElementById('password-field').style.display = "none";
@@ -261,6 +278,8 @@ function createUser() {
     document.getElementById('edit-user-id').value = '';
     document.getElementById('edit-username').value = '';
     document.getElementById('edit-email').value = '';
+    document.getElementById('edit-vorname').value = '';
+    document.getElementById('edit-name').value = '';
     document.getElementById('edit-role').value = 'benutzer';
     document.getElementById('edit-status').value = 'true';
     document.getElementById('password-field').style.display = "block";
@@ -274,6 +293,8 @@ document.getElementById('edit-user-form').addEventListener('submit', (e) => {
     const user = {
         username: document.getElementById('edit-username').value,
         email: document.getElementById('edit-email').value,
+        vorname: document.getElementById('edit-vorname').value,
+        name: document.getElementById('edit-name').value,
         role: document.getElementById('edit-role').value,
         active: document.getElementById('edit-status').value === "true"
     };
@@ -284,7 +305,10 @@ document.getElementById('edit-user-form').addEventListener('submit', (e) => {
 
     fetch(apiUsers + (id ? "/" + id : ""), {
         method: id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") },
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        },
         body: JSON.stringify(user)
     }).then(() => {
         closeModal('editUserModal');
