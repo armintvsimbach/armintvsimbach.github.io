@@ -178,7 +178,7 @@ function loadPage(id) {
           placeholder: "Schreibe deine Wiki-Seite hier..."
         });
       }
-      easyMDE.value(page.content);
+      easyMDE.value(page.content || '');
       showPreview();
     });
 }
