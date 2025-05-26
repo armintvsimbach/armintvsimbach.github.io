@@ -22,7 +22,17 @@
     .page-link { cursor: pointer; margin: 5px 0; display: block; }
     .tree-indent { margin-left: 20px; }
     .active { font-weight: bold; }
-    .top-bar { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    #page-selector {
+      min-width: 180px;
+      flex-grow: 1;
+      max-width: 100%;
+    }
     .editor-toolbar, .editor-toolbar.fullscreen {
       background: #f0f0f0 !important;
       border: 1px solid #ccc;
@@ -36,6 +46,10 @@
     }
     .editor-container { display: none; }
     .preview-container { display: block; }
+    #preview {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
     #search { width: 90%; max-width: 100%; box-sizing: border-box; }
     #titleEditContainer { display: none; margin-bottom: 10px; }
     #titleEdit { width: 100%; padding: 4px; }
@@ -43,8 +57,24 @@
       font-family: monospace;
     }
     @media (max-width: 768px) {
-      aside { display: none; position: absolute; z-index: 100; height: 100vh; }
-      aside.show { display: block; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
+      .wiki-container {
+        flex-direction: column;
+      }
+      aside {
+        display: none;
+        position: absolute;
+        z-index: 100;
+        height: 100vh;
+      }
+      aside.show {
+        display: block;
+        background: white;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+      }
+      main {
+        width: 100%;
+        padding: 16px;
+      }
     }
   </style>
 </head>
@@ -145,6 +175,7 @@ function fillPageSelector() {
   sel.innerHTML = "";
   const rootPages = pages.filter(p => !p.parent_id);
   rootPages.forEach(p => addPageOption(p, sel, 0));
+  sel.onchange = () => loadPage(sel.value); // ← wichtig für mobile Auswahl!
 }
 
 function addPageOption(page, sel, depth) {
