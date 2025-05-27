@@ -6,18 +6,75 @@
   <title>Basisdienst Planung</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f1f5f9; }
     main { padding: 20px; max-width: 1000px; margin: auto; }
     h1 { margin-bottom: 10px; }
     select, button { padding: 5px; margin: 5px 0; }
-	.week-row {
-	  display: grid;
-	  grid-template-columns: 60% 40%;
-	  gap: 10px;
-	  align-items: center;
-	  padding: 10px 0;
-	  border-bottom: 1px solid #ccc;
-	}
+    .wochen-karten {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin: 32px 0;
+      justify-content: flex-start;
+    }
+    .woche-card {
+      background: #f8fafc;
+      border-radius: 1.2em;
+      box-shadow: 0 2px 12px 0 #0001;
+      padding: 22px 32px;
+      width: 260px;
+      min-height: 130px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: box-shadow 0.2s, border 0.2s;
+      position: relative;
+    }
+    .woche-card:hover {
+      box-shadow: 0 6px 18px 0 #0002;
+    }
+    .kw {
+      font-size: 1.3em;
+      font-weight: 700;
+      color: #0a67ad;
+    }
+    .zeitraum {
+      margin: 4px 0 14px 0;
+      font-size: 1.05em;
+      color: #2d3748;
+    }
+    .name {
+      font-size: 1.15em;
+      font-weight: 600;
+      color: #3a3a3a;
+    }
+    .empty {
+      color: #dc2626;
+      font-weight: 500;
+    }
+    .highlight {
+      border: 2.5px solid #facc15;
+      background: #fefcbf;
+    }
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed; left:0; top:0; width:100vw; height:100vh;
+      background: #1119a2cc; z-index: 50; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-content {
+      background: #fff; border-radius: 18px; padding: 32px; min-width: 340px; max-width: 520px; width: 96vw;
+      box-shadow: 0 8px 32px #0003;
+      max-height: 90vh; overflow-y: auto;
+    }
+    /* Bearbeiten-Liste */
+    .week-row {
+      display: grid;
+      grid-template-columns: 60% 40%;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #ccc;
+    }
     .week-label {
       white-space: nowrap;
       font-weight: bold;
@@ -26,42 +83,32 @@
       min-width: max-content;
       padding: 5px;
     }
-    .highlight {
-      background-color: #ffffcc;
+    .empty-select { border: 2px solid red; }
+    .highlight-row { background: #fefcbf; }
+    @media (max-width: 600px) {
+      .wochen-karten { flex-direction: column; gap: 12px; }
+      .woche-card { width: 98vw; min-width:unset; }
+      .modal-content { padding: 12px; }
     }
-    .empty-select {
-      border: 2px solid red;
-    }
-	@media (max-width: 600px) {
-	  .week-row {
-		grid-template-columns: 1fr;
-		gap: 5px;
-	  }
-
-	  .user-select {
-		width: 100%;
-	  }
-	}
-
   </style>
 </head>
 <body>
 
 <header>
-  <div class="header-container">
+  <div class="header-container" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
     <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
-      <img src="Logo.png" alt="Vereinslogo" class="logo" />
+      <img src="Logo.png" alt="Vereinslogo" class="logo" style="height:54px;" />
       <h1>TC Simbach</h1>
     </a>
-    <div class="burger" onclick="toggleMenu()">☰</div>
+    <div class="burger" onclick="toggleMenu()" style="font-size:2em;cursor:pointer;">☰</div>
   </div>
-  <nav id="main-nav">
+  <nav id="main-nav" style="padding:0 20px;">
     <a href="index.html">Start</a>
     <a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
     <a href="equipment.html">Equipmentverwaltung</a>
-	<a href="basisdienst.html">Basisdienst</a>
-	<a href="wiki.html">Wiki</a>
+    <a href="basisdienst.html">Basisdienst</a>
+    <a href="wiki.html">Wiki</a>
     <a href="admin.html">Admin</a>
   </nav>
 </header>
@@ -70,185 +117,233 @@
   <h1>Basisdienst Planung</h1>
   <label for="year">Jahr:</label>
   <select id="year" onchange="loadWeeks()"></select>
-  <div id="weeks"></div>
+  <button id="bearbeitenBtn" style="margin-left:16px;">Bearbeiten</button>
+
+  <!-- Kachelansicht -->
+  <div id="kachelAnsicht" class="wochen-karten" style="margin-top:32px;"></div>
+
+  <!-- Bearbeitungsansicht im Modal -->
+  <div id="modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>Basisdienst bearbeiten</h2>
+        <button onclick="closeModal()" style="font-size:1.6em;background:none;border:none;cursor:pointer;">&times;</button>
+      </div>
+      <div id="bearbeitenListe"></div>
+    </div>
+  </div>
 </main>
 
 <script>
-  const API_BASE = "https://tcs-manager-backend.onrender.com/api";
+const API_BASE = "https://tcs-manager-backend.onrender.com/api";
+let wochenData = [];
+let userList = [];
 
-  function authHeaders() {
-    return {
-      'Authorization': 'Bearer ' + localStorage.getItem('token')
-    };
+function authHeaders() {
+  return {
+    'Authorization': 'Bearer ' + localStorage.getItem('token')
+  };
+}
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('de-DE');
+}
+function getISOWeekInfo(date) {
+  const d = new Date(date.getTime());
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() + 4 - day);
+  const yearStart = new Date(d.getFullYear(), 0, 4);
+  const firstDay = (yearStart.getDay() + 6) % 7;
+  yearStart.setDate(yearStart.getDate() - firstDay + 3);
+  const weekNo = 1 + Math.floor((d - yearStart) / (7 * 86400000));
+  return { year: d.getFullYear(), week: weekNo };
+}
+
+async function initYearSelect() {
+  const select = document.getElementById("year");
+  select.innerHTML = "";
+  const response = await fetch(`${API_BASE}/basisdienst/jahre`, { headers: authHeaders() });
+  if (!response.ok) {
+    alert("Fehler beim Laden der Jahre.");
+    return;
   }
+  const years = await response.json();
+  const currentYear = new Date().getFullYear();
+  const futureYears = [currentYear + 1, currentYear + 2];
+  const allYears = [...new Set([...years, currentYear, ...futureYears])].sort((a, b) => a - b);
+  allYears.forEach(y => {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    if (y === currentYear) opt.selected = true;
+    select.appendChild(opt);
+  });
+  await loadWeeks();
+}
 
-  function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('de-DE');
+async function loadWeeks() {
+  // Daten für Standardansicht + Bearbeiten-Modal holen
+  const year = document.getElementById("year").value;
+  const kachelContainer = document.getElementById("kachelAnsicht");
+  kachelContainer.innerHTML = "";
+  let response = await fetch(`${API_BASE}/basisdienst/${year}`, { headers: authHeaders() });
+  if (!response.ok) {
+    alert("Fehler beim Laden der Wochen.");
+    return;
   }
-
-  // Neue ISO-Wochenberechnung (inkl. Jahr)
-  function getISOWeekInfo(date) {
-    const d = new Date(date.getTime());
-    d.setHours(0, 0, 0, 0);
-
-    const day = d.getDay() || 7; // Montag=1, Sonntag=7
-    d.setDate(d.getDate() + 4 - day); // auf Donnerstag der aktuellen Woche
-
-    const yearStart = new Date(d.getFullYear(), 0, 4);
-    const firstDay = (yearStart.getDay() + 6) % 7;
-    yearStart.setDate(yearStart.getDate() - firstDay + 3);
-
-    const weekNo = 1 + Math.floor((d - yearStart) / (7 * 86400000));
-    return {
-      year: d.getFullYear(),
-      week: weekNo
-    };
+  let data = await response.json();
+  if (!data || data.length === 0) {
+    const create = confirm(`Für das Jahr ${year} existieren noch keine Kalenderwochen. Möchtest du sie jetzt anlegen?`);
+    if (create) {
+      const res = await fetch(`${API_BASE}/basisdienst/${year}/generate`, {
+        method: 'POST',
+        headers: authHeaders()
+      });
+      if (res.ok) {
+        data = await res.json();
+      } else {
+        alert("Fehler beim Anlegen der Kalenderwochen.");
+        return;
+      }
+    } else { return; }
   }
+  // Nutzer holen
+  const userResponse = await fetch(`${API_BASE}/users`, { headers: authHeaders() });
+  userList = await userResponse.json();
+  userList.sort((a, b) => {
+    const nameA = `${a.vorname || ''} ${a.name || ''}`.toLowerCase();
+    const nameB = `${b.vorname || ''} ${b.name || ''}`.toLowerCase();
+    return nameA.localeCompare(nameB, 'de');
+  });
 
-  async function initYearSelect() {
-    const select = document.getElementById("year");
-    const response = await fetch(`${API_BASE}/basisdienst/jahre`, {
-      headers: authHeaders()
-    });
-    if (!response.ok) {
-      alert("Fehler beim Laden der Jahre.");
-      return;
+  wochenData = data; // Merken für Bearbeiten-Ansicht
+
+  // Aktuelle Woche bestimmen
+  const infoToday = getISOWeekInfo(new Date());
+
+  // --- Kachelansicht aufbauen ---
+let aktuelleKachelId = null; // merken, falls aktuelle Woche gefunden
+
+data.forEach(w => {
+  const infoWeek = getISOWeekInfo(new Date(w.von));
+  let user = userList.find(u => u.id === w.user_id);
+  let nameStr = user
+    ? `${user.vorname || ''} ${user.name || ''}`.trim() || user.username || `Benutzer ${user.id}`
+    : (w.user_id ? `ID ${w.user_id}` : "");
+
+  const card = document.createElement("div");
+  let istAktuell = (infoWeek.year === infoToday.year && infoWeek.week === infoToday.week);
+  card.className = "woche-card" + (istAktuell ? " highlight" : "");
+  if (istAktuell) {
+    card.id = "aktuelle-woche";
+    aktuelleKachelId = "aktuelle-woche";
+  }
+  card.innerHTML = `
+    <div class="kw">KW ${infoWeek.week}</div>
+    <div class="zeitraum">${formatDate(w.von)} – ${formatDate(w.bis)}</div>
+    <div class="name${!w.user_id ? " empty" : ""}">${nameStr || "– niemand zugewiesen –"}</div>
+  `;
+  kachelContainer.appendChild(card);
+});
+
+// Nach dem Erstellen der Kacheln: zur aktuellen scrollen (falls vorhanden)
+if (aktuelleKachelId) {
+  setTimeout(() => {
+    const aktuelle = document.getElementById(aktuelleKachelId);
+    if (aktuelle) {
+      aktuelle.scrollIntoView({ behavior: "smooth", block: "center" });
+      aktuelle.focus?.();
     }
+  }, 200);
+}
 
-    const years = await response.json();
+}
 
-    const currentYear = new Date().getFullYear();
-    const futureYears = [currentYear + 1, currentYear + 2];
-    const allYears = [...new Set([...years, currentYear, ...futureYears])].sort((a, b) => a - b);
+document.getElementById("bearbeitenBtn").onclick = openModal;
 
-    allYears.forEach(y => {
+function openModal() {
+  // Bearbeitungsansicht mit Wochen + Nutzern anzeigen
+  const modal = document.getElementById("modal");
+  const liste = document.getElementById("bearbeitenListe");
+  liste.innerHTML = ""; // Reset
+  const infoToday = getISOWeekInfo(new Date());
+
+  wochenData.forEach(w => {
+    const infoWeek = getISOWeekInfo(new Date(w.von));
+    const row = document.createElement("div");
+    row.className = "week-row" + (
+      (infoWeek.year === infoToday.year && infoWeek.week === infoToday.week)
+        ? " highlight-row" : ""
+    );
+    const label = document.createElement("div");
+    label.className = "week-label";
+    label.textContent = `KW ${infoWeek.week}: ${formatDate(w.von)} bis ${formatDate(w.bis)}`;
+
+    const select = document.createElement("select");
+    select.className = "user-select";
+    const noUserOption = document.createElement("option");
+    noUserOption.textContent = "– niemand zugewiesen –";
+    noUserOption.value = "";
+    select.appendChild(noUserOption);
+
+    userList.forEach(u => {
       const opt = document.createElement("option");
-      opt.value = y;
-      opt.textContent = y;
-      if (y === currentYear) opt.selected = true;
+      opt.value = u.id;
+      opt.textContent = `${u.vorname || ''} ${u.name || ''}`.trim() || u.username || `Benutzer ${u.id}`;
+      opt.title = u.username;
+      if (w.user_id === u.id) opt.selected = true;
       select.appendChild(opt);
     });
 
-    loadWeeks();
-  }
-
-  async function loadWeeks() {
-    const year = document.getElementById("year").value;
-    const container = document.getElementById("weeks");
-    container.innerHTML = "";
-
-    const response = await fetch(`${API_BASE}/basisdienst/${year}`, {
-      headers: authHeaders()
-    });
-    if (!response.ok) {
-      alert("Fehler beim Laden der Wochen.");
-      return;
+    if (!w.user_id) {
+      select.classList.add("empty-select");
+      noUserOption.selected = true;
     }
 
-    let data = await response.json();
-
-    if (!data || data.length === 0) {
-      const create = confirm(`Für das Jahr ${year} existieren noch keine Kalenderwochen. Möchtest du sie jetzt anlegen?`);
-      if (create) {
-        const res = await fetch(`${API_BASE}/basisdienst/${year}/generate`, {
-          method: 'POST',
-          headers: authHeaders()
-        });
-        if (res.ok) {
-          data = await res.json();
+    select.onchange = () => {
+      const newUserId = select.value || null;
+      fetch(`${API_BASE}/basisdienst/${w.id}`, {
+        method: 'PUT',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: newUserId })
+      }).then(r => {
+        if (!r.ok) {
+          alert("Fehler beim Speichern der Zuweisung");
         } else {
-          alert("Fehler beim Anlegen der Kalenderwochen.");
-          return;
-        }
-      } else {
-        return;
-      }
-    }
-
-    const userResponse = await fetch(`${API_BASE}/users`, {
-      headers: authHeaders()
-    });
-	const users = await userResponse.json();
-	users.sort((a, b) => {
-	  const nameA = `${a.vorname || ''} ${a.name || ''}`.toLowerCase();
-	  const nameB = `${b.vorname || ''} ${b.name || ''}`.toLowerCase();
-	  return nameA.localeCompare(nameB, 'de');
-	});
-
-    if (!Array.isArray(users) || users.length === 0) {
-      const message = document.createElement("div");
-      message.textContent = "⚠️ Keine Benutzer gefunden.";
-      container.appendChild(message);
-      return;
-    }
-
-    const infoToday = getISOWeekInfo(new Date());
-
-    data.forEach(w => {
-      const row = document.createElement("div");
-      row.className = "week-row";
-
-      const infoWeek = getISOWeekInfo(new Date(w.von));
-      if (infoWeek.year === infoToday.year && infoWeek.week === infoToday.week) {
-        row.classList.add("highlight");
-      }
-
-      const label = document.createElement("div");
-      label.className = "week-label";
-      label.textContent = `KW ${infoWeek.week}: ${formatDate(w.von)} bis ${formatDate(w.bis)}`;
-
-      const select = document.createElement("select");
-      select.className = "user-select";
-
-      const noUserOption = document.createElement("option");
-      noUserOption.textContent = "– niemand zugewiesen –";
-      noUserOption.value = "";
-      select.appendChild(noUserOption);
-
-      users.forEach(u => {
-        const opt = document.createElement("option");
-        opt.value = u.id;
-        opt.textContent = `${u.vorname || ''} ${u.name || ''}`.trim() || u.username || `Benutzer ${u.id}`;
-		opt.title = u.username;
-        if (w.user_id === u.id) opt.selected = true;
-        select.appendChild(opt);
-      });
-
-      if (!w.user_id) {
-        select.classList.add("empty-select");
-        noUserOption.selected = true;
-      }
-
-      select.onchange = () => {
-        const newUserId = select.value || null;
-        fetch(`${API_BASE}/basisdienst/${w.id}`, {
-          method: 'PUT',
-          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: newUserId })
-        }).then(r => {
-          if (!r.ok) {
-            alert("Fehler beim Speichern der Zuweisung");
+          if (!newUserId) {
+            select.classList.add("empty-select");
           } else {
-            if (!newUserId) {
-              select.classList.add("empty-select");
-            } else {
-              select.classList.remove("empty-select");
-            }
+            select.classList.remove("empty-select");
           }
-        });
-      };
+          // Nach Änderung auch Kachelansicht updaten:
+          loadWeeks();
+        }
+      });
+    };
 
-      row.appendChild(label);
-      row.appendChild(select);
-      container.appendChild(row);
-    });
-  }
+    row.appendChild(label);
+    row.appendChild(select);
+    liste.appendChild(row);
+  });
+  modal.style.display = "flex";
+}
 
-  function toggleMenu() {
-    document.getElementById("main-nav").classList.toggle("show");
-  }
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
 
-  initYearSelect();
+// Bei Klick auf Overlay schließen (optional)
+document.getElementById("modal").addEventListener("click", function(e){
+  if(e.target === this) closeModal();
+});
+
+// Für Burger-Menü, falls mobil
+function toggleMenu() {
+  document.getElementById("main-nav").classList.toggle("show");
+}
+
+// Initial
+initYearSelect();
 </script>
 </body>
 </html>
