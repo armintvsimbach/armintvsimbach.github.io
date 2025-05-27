@@ -352,7 +352,7 @@ input:disabled {
     margin: 5px 0 0 0;
     position: absolute;
     z-index: 1000;
-    width: 95%;
+    width: 100%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -578,4 +578,21 @@ html, body {
     border-top: 1px solid #e0e0e0;
     margin: 10px 0;
     width: 100%;
+}
+
+/* Korrigiert zu breites Datumsfeld in mobilen Formularen */
+@media (max-width: 768px) {
+    input[type="date"] {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    #r-due-date {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+}
+#r-due-date {
+    background-color: #eee;
 }
