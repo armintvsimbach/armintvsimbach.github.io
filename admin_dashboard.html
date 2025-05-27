@@ -41,8 +41,8 @@
     <a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
     <a href="equipment.html">Equipmentverwaltung</a>
-    <a href="basisdienst.html">Basisdienst</a>
-    <a href="wiki.html">Wiki</a>
+	<a href="basisdienst.html">Basisdienst</a>
+	<a href="wiki.html">Wiki</a>
     <a href="admin.html">Admin</a>
   </nav>
 </header>
@@ -161,7 +161,6 @@ async function fetchLoginLocations() {
     return;
   }
   const data = await resp.json();
-  console.log('Login-Geo-Daten:', data); // <-- Hier!
 
   map = L.map('login-map').setView([48, 12], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -178,7 +177,6 @@ async function fetchLoginLocations() {
     }
   });
 }
-
 
 </script>
 </body>
