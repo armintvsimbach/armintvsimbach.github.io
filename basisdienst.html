@@ -117,6 +117,7 @@
   <h1>Basisdienst Planung</h1>
   <label for="year">Jahr:</label>
   <select id="year" onchange="loadWeeks()"></select>
+  <button id="icalExportBtn" style="margin-left:16px;">Kalender (.ics)</button>
   <button id="bearbeitenBtn" style="margin-left:16px;">Bearbeiten</button>
 
   <!-- Kachelansicht -->
@@ -341,6 +342,52 @@ document.getElementById("modal").addEventListener("click", function(e){
 function toggleMenu() {
   document.getElementById("main-nav").classList.toggle("show");
 }
+function downloadICS() {
+  const year = document.getElementById("year").value;
+  let ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//TC Simbach//Basisdienst//DE"
+  ];
+  wochenData.forEach(w => {
+    const user = userList.find(u => u.id === w.user_id);
+    const name = user
+      ? `${user.vorname || ''} ${user.name || ''}`.trim() || user.username || `Benutzer ${user.id}`
+      : (w.user_id ? `ID ${w.user_id}` : "Kein Dienst");
+    // Keine Termine für unbesetzte Dienste:
+    if (!w.user_id) return;
+
+    // Start- und Enddatum im korrekten Format (YYYYMMDD, Enddatum+1 für Ganztags-Events)
+    const dtStart = w.von.replace(/-/g,"");
+    // Wochendienst endet am letzten Tag um 23:59, iCal-Termine laufen in der Regel bis zum Folgetag (exklusive), daher:
+    let endDateObj = new Date(w.bis);
+    endDateObj.setDate(endDateObj.getDate() + 1);
+    const dtEnd = endDateObj.toISOString().slice(0,10).replace(/-/g,"");
+
+    ics.push(
+      "BEGIN:VEVENT",
+      "SUMMARY:Basisdienst – " + name,
+      "DESCRIPTION:" + "Dienst von " + name,
+      "DTSTART;VALUE=DATE:" + dtStart,
+      "DTEND;VALUE=DATE:" + dtEnd,
+      "LOCATION:Tauchbasis",
+      "UID:basisdienst-" + w.id + "-" + year + "@tcsimbach.de",
+      "END:VEVENT"
+    );
+  });
+  ics.push("END:VCALENDAR");
+  // ICS-Download:
+  const blob = new Blob([ics.join("\r\n")], {type: "text/calendar"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Basisdienst_" + year + ".ics";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
+
+document.getElementById("icalExportBtn").onclick = downloadICS;
 
 // Initial
 initYearSelect();
