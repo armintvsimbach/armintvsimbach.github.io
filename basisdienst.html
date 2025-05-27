@@ -10,26 +10,28 @@
     main { padding: 20px; max-width: 1000px; margin: auto; }
     h1 { margin-bottom: 10px; }
     select, button { padding: 5px; margin: 5px 0; }
-    .wochen-karten {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
-      margin: 32px 0;
-      justify-content: flex-start;
-    }
-    .woche-card {
-      background: #f8fafc;
-      border-radius: 1.2em;
-      box-shadow: 0 2px 12px 0 #0001;
-      padding: 22px 32px;
-      width: 260px;
-      min-height: 130px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      transition: box-shadow 0.2s, border 0.2s;
-      position: relative;
-    }
+	.wochen-karten {
+	  display: grid;
+	  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	  gap: 24px;
+	  margin: 32px 0;
+	  justify-items: stretch;
+	}
+	.woche-card {
+	  background: #f8fafc;
+	  border-radius: 1.2em;
+	  box-shadow: 0 2px 12px 0 #0001;
+	  padding: 22px 18px;
+	  min-height: 130px;
+	  display: flex;
+	  flex-direction: column;
+	  justify-content: center;
+	  transition: box-shadow 0.2s, border 0.2s;
+	  position: relative;
+	  max-width: 340px;
+	  width: 100%;
+	  margin: 0 auto;
+	}
     .woche-card:hover {
       box-shadow: 0 6px 18px 0 #0002;
     }
