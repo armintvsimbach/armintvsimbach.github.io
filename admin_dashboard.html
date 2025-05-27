@@ -74,6 +74,10 @@ let loginStats = null;
 let chart = null;
 let selectedStat = 'last_24h';
 
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('show');
+}
+
 async function fetchLoginStats() {
   const token = localStorage.getItem('token');
   if (!token) {
