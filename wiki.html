@@ -37,11 +37,13 @@
   </aside>
 
   <main>
-    <div class="top-bar">
-      <select id="page-selector"></select>
-      <button onclick="toggleEditMode()" id="editToggle">✏️ Bearbeiten</button>
-      <button onclick="savePage()" id="saveButton" style="display:none;">💾 Speichern</button>
-    </div>
+	<div class="top-bar-wrapper">
+	  <div class="top-bar">
+		<select id="page-selector"></select>
+		<button onclick="toggleEditMode()" id="editToggle">✏️ Bearbeiten</button>
+		<button onclick="savePage()" id="saveButton" hidden>💾 Speichern</button>
+	  </div>
+	</div>
     <div id="titleEditContainer">
       <label for="titleEdit">Seitentitel:</label>
       <input type="text" id="titleEdit">
