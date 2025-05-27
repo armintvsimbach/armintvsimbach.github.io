@@ -5,49 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tauchclub Simbach am Inn</title>
   <link rel="stylesheet" href="style.css">
+
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Leaflet CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     #login-map { width: 100%; height: 400px; margin-top: 20px; }
-    .stats-container { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 30px; }
-    .stat-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 8px #0002; padding: 20px; flex: 1 1 280px; min-width: 0px; }
-    .chart-buttons { margin-top: 18px; }
-    .chart-buttons button {
-      margin-right: 8px; padding: 8px 14px; border: none; border-radius: 7px;
-      background: #eaeaea; font-weight: bold; cursor: pointer;
-      transition: background .18s;
+    .stats-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-top: 30px;
     }
-    .chart-buttons button.active, .chart-buttons button:hover {
-      background: #1a73e8; color: #fff;
+    .stat-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px #0002;
+      padding: 20px;
+      flex: 1 1 280px;
+      min-width: 0;
+    }
+    .chart-buttons {
+      margin-top: 18px;
+    }
+    .chart-buttons button {
+      margin-right: 8px;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 7px;
+      background: #eaeaea;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .chart-buttons button.active,
+    .chart-buttons button:hover {
+      background: #1a73e8;
+      color: #fff;
     }
     @media (max-width: 768px) {
-      .stats-container { flex-direction: column; }
+      .stats-container {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="header-container"><a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
-    <img src="Logo.png" alt="Vereinslogo" class="logo">
-    <h1>TC Simbach</h1>
-    </a><div class="burger" onclick="toggleMenu()">☰</div>
+  <div class="header-container">
+    <a href="index.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 20px;">
+      <img src="Logo.png" alt="Vereinslogo" class="logo">
+      <h1>TC Simbach</h1>
+    </a>
+    <div class="burger" onclick="toggleMenu()">☰</div>
   </div>
   <nav id="main-nav">
     <a href="index.html">Start</a>
     <a href="verleih.html">Verleih</a>
     <a href="mitgliederverwaltung.html">Mitgliederverwaltung</a>
     <a href="equipment.html">Equipmentverwaltung</a>
-	<a href="basisdienst.html">Basisdienst</a>
-	<a href="wiki.html">Wiki</a>
+    <a href="basisdienst.html">Basisdienst</a>
+    <a href="wiki.html">Wiki</a>
     <a href="admin.html">Admin</a>
   </nav>
 </header>
 
-<main style="padding: 40px; max-width: 1200px; margin: auto;">
+<main style="padding: 20px 10px; max-width: 1200px; margin: auto;">
   <h2>Admin-Dashboard: Login-Statistiken & Weltkarte</h2>
   <div class="stats-container">
     <div class="stat-card">
@@ -60,22 +87,22 @@
       <canvas id="loginChart" style="margin-top:16px;"></canvas>
     </div>
     <div class="stat-card">
-      <h3>Login-Orte (Weltkarte, letzte 7 Tage)</h3>
+      <h3>Login-Orte (Weltkarte)</h3>
       <div id="login-map"></div>
     </div>
   </div>
 </main>
 
-<script src="shared.js"></script>
 <script>
-const API_BASE = 'https://tcs-manager-backend.onrender.com/api'; // HIER ggf. anpassen
+const API_BASE = 'https://tcs-manager-backend.onrender.com/api';
 
 let loginStats = null;
 let chart = null;
 let selectedStat = 'last_24h';
+let map = null;
 
 function toggleMenu() {
-    document.getElementById('main-nav').classList.toggle('show');
+  document.getElementById('main-nav').classList.toggle('show');
 }
 
 async function fetchLoginStats() {
@@ -84,26 +111,33 @@ async function fetchLoginStats() {
     alert('Nicht eingeloggt! Bitte zuerst einloggen.');
     return;
   }
-  const resp = await fetch(`${API_BASE}/login-stats`, { headers: { 'Authorization': 'Bearer ' + token }});
+
+  const resp = await fetch(`${API_BASE}/login-stats`, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+
   if (!resp.ok) {
     alert('Statistik konnte nicht geladen werden (Status ' + resp.status + ')');
     return;
   }
+
   loginStats = await resp.json();
   showStats(selectedStat);
+  updateMap(selectedStat);
 }
 
 function showStats(type) {
   selectedStat = type;
-  ['btn_24h', 'btn_7d', 'btn_total'].forEach(id => document.getElementById(id).classList.remove('active'));
-  if(type === 'last_24h') document.getElementById('btn_24h').classList.add('active');
-  if(type === 'last_7d') document.getElementById('btn_7d').classList.add('active');
-  if(type === 'total') document.getElementById('btn_total').classList.add('active');
+  ['btn_24h', 'btn_7d', 'btn_total'].forEach(id =>
+    document.getElementById(id).classList.remove('active')
+  );
+  document.getElementById(`btn_${type === 'last_24h' ? '24h' : type === 'last_7d' ? '7d' : 'total'}`).classList.add('active');
 
-  const data = (loginStats && loginStats[type]) ? loginStats[type] : [];
+  const data = loginStats?.[type] || [];
   const labels = data.map(r => r.username);
   const counts = data.map(r => parseInt(r.count));
-  if(chart) chart.destroy();
+
+  if (chart) chart.destroy();
   const ctx = document.getElementById('loginChart').getContext('2d');
   chart = new Chart(ctx, {
     type: 'bar',
@@ -122,50 +156,33 @@ function showStats(type) {
       plugins: { legend: { display: false } }
     }
   });
+
+  updateMap(type);
 }
 
-// Weltkarte
-let map = null;
-async function fetchLoginLocations() {
-  const token = localStorage.getItem('jwt');
-  if (!token) return;
-  const resp = await fetch(`${API_BASE}/login-geolocations?days=7`, { headers: { 'Authorization': 'Bearer ' + token }});
-  if (!resp.ok) {
-    alert('Geodaten konnten nicht geladen werden (Status ' + resp.status + ')');
-    return;
-  }
-  const data = await resp.json();
-
-  map = L.map('login-map').setView([48, 12], 2); // Europa als Start
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  data.forEach(loc => {
-    if(loc.lat && loc.lon) {
-      const marker = L.marker([loc.lat, loc.lon]).addTo(map);
-      const city = loc.city ? loc.city + ', ' : '';
-      const country = loc.country || '';
-      marker.bindPopup(`<b>${city}${country}</b><br>${loc.ip}`);
-    }
-  });
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  fetchLoginStats();
-  fetchLoginLocations();
-});
-
-async function fetchLoginLocations() {
+async function updateMap(statType) {
   const token = localStorage.getItem('token');
   if (!token) return;
-  const resp = await fetch(`${API_BASE}/login-geolocations?days=7`, { headers: { 'Authorization': 'Bearer ' + token }});
+
+  let days = 7;
+  if (statType === 'last_24h') days = 1;
+  if (statType === 'total') days = 9999;
+
+  const resp = await fetch(`${API_BASE}/login-geolocations?days=${days}`, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+
   if (!resp.ok) {
     alert('Geodaten konnten nicht geladen werden (Status ' + resp.status + ')');
     return;
   }
+
   const data = await resp.json();
+
+  if (map) {
+    map.remove();
+    document.getElementById('login-map').innerHTML = ""; // DOM leeren
+  }
 
   map = L.map('login-map').setView([48, 12], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -174,7 +191,7 @@ async function fetchLoginLocations() {
   }).addTo(map);
 
   data.forEach(loc => {
-    if(loc.lat && loc.lon) {
+    if (loc.lat && loc.lon) {
       const marker = L.marker([loc.lat, loc.lon]).addTo(map);
       const city = loc.city ? loc.city + ', ' : '';
       const country = loc.country || '';
@@ -183,6 +200,7 @@ async function fetchLoginLocations() {
   });
 }
 
+window.addEventListener('DOMContentLoaded', fetchLoginStats);
 </script>
 </body>
 </html>
