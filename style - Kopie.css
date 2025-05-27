@@ -352,7 +352,7 @@ input:disabled {
     margin: 5px 0 0 0;
     position: absolute;
     z-index: 1000;
-    width: 95%;
+    width: 100%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -569,5 +569,290 @@ html, body {
 @media (max-width: 768px) {
   .mobile-search {
     display: block;
+  }
+}
+
+.form-divider {
+    grid-column: 1 / -1;
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 10px 0;
+    width: 100%;
+}
+
+/* Korrigiert zu breites Datumsfeld in mobilen Formularen */
+@media (max-width: 768px) {
+    input[type="date"] {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+	#r-due-date {
+		background-color: #eee;
+		width: 100%;
+		box-sizing: border-box;
+	}
+}
+#r-due-date {
+    background-color: #eee;
+}
+/* Fix für iOS Safari & Chrome: Date-Input zu breit */
+.form-group input[type="date"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    display: block; /* Verhindert "inline" Verhalten */
+    appearance: none;
+    -webkit-appearance: none;
+    font-size: 1rem;
+}
+/* 🛠 iOS Fix: Erzwinge responsives Datumsfeld */
+input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    font-size: 16px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .top-bar > * {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #page-selector,
+  #editToggle,
+  #saveButton {
+    font-size: 16px;
+    padding: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Wiki-spezifische Styles */
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.wiki-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+aside {
+    width: 260px;
+    background: #f3f3f3;
+    padding: 10px;
+    overflow-y: auto;
+    border-right: 1px solid #ccc;
+}
+
+aside h3 {
+    margin-top: 0;
+}
+
+main {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.page-link {
+    cursor: pointer;
+    margin: 5px 0;
+    display: block;
+}
+
+.tree-indent {
+    margin-left: 20px;
+}
+
+.active {
+    font-weight: bold;
+}
+
+.top-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+#page-selector {
+    min-width: 180px;
+    flex-grow: 1;
+    max-width: 100%;
+}
+
+.editor-toolbar,
+.editor-toolbar.fullscreen {
+    background: #f0f0f0 !important;
+    border: 1px solid #ccc;
+}
+
+.editor-toolbar button {
+    color: #333 !important;
+}
+
+.editor-statusbar {
+    background: #fafafa;
+    border-top: 1px solid #ccc;
+}
+
+.editor-container {
+    display: none;
+}
+
+.preview-container {
+    display: block;
+}
+
+#preview {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
+    overflow-x: auto;
+}
+
+#search {
+    width: 90%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#titleEditContainer {
+    display: none;
+    margin-bottom: 10px;
+}
+
+#titleEdit {
+    width: 100%;
+    padding: 4px;
+}
+
+select#page-selector option {
+    font-family: monospace;
+}
+
+@media (max-width: 768px) {
+    .wiki-container {
+        flex-direction: column;
+    }
+
+    aside {
+        display: none;
+        position: absolute;
+        z-index: 100;
+        height: 100vh;
+    }
+
+    aside.show {
+        display: block;
+        background: white;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    }
+
+    main {
+        width: 100%;
+        padding: 16px;
+    }
+
+    .top-bar {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .top-bar > * {
+        flex: 1 1 auto;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        display: block;
+    }
+
+    #page-selector,
+    #editToggle,
+    #saveButton {
+        font-size: 16px;
+        padding: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    #preview,
+    .editor-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    #editorContainer .CodeMirror,
+    .editor-toolbar,
+    .editor-statusbar {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    button {
+        min-height: 44px;
+    }
+}
+.top-bar-wrapper {
+    max-width: 95%;
+    width: 95%;
+    overflow-x: hidden;
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .top-bar > * {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  #page-selector,
+  #editToggle,
+  #saveButton {
+    font-size: 16px;
+    padding: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 44px;
   }
 }
