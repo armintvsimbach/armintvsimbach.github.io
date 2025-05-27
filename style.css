@@ -352,7 +352,7 @@ input:disabled {
     margin: 5px 0 0 0;
     position: absolute;
     z-index: 1000;
-    width: 95%;
+    width: 100%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -570,4 +570,12 @@ html, body {
   .mobile-search {
     display: block;
   }
+}
+
+.form-divider {
+    grid-column: 1 / -1;
+    border: none;
+    border-top: 1px solid #e0e0e0;
+    margin: 10px 0;
+    width: 100%;
 }
