@@ -221,6 +221,18 @@ function loadPage(id) {
       currentPageId = page.id;
       document.getElementById("page-selector").value = page.id;
       document.getElementById("titleEdit").value = page.title;
+
+      // Entferne alte Markierung
+      document.querySelectorAll(".page-link").forEach(el => el.classList.remove("active"));
+
+      // Setze neue Markierung (nach kleinem Timeout, weil DOM evtl. noch nicht aktualisiert ist)
+      setTimeout(() => {
+        const allLinks = document.querySelectorAll(".page-link");
+        allLinks.forEach(el => {
+          if (el.textContent === page.title) el.classList.add("active");
+        });
+      }, 50);
+
       if (!easyMDE) {
         easyMDE = new EasyMDE({
           element: document.getElementById("editor"),
@@ -233,6 +245,7 @@ function loadPage(id) {
       showPreview();
     });
 }
+
 
 function showPreview() {
   editMode = false;
@@ -320,6 +333,29 @@ function filterPages() {
   const rootPages = matchedPages.filter(p => !p.parent_id);
   rootPages.forEach(p => renderPageBranch(p, tree, 0));
 }
+
+function createPage() {
+  const title = document.getElementById("newPageTitle").value.trim();
+  if (!title) return alert("Titel darf nicht leer sein.");
+
+  const pageType = document.querySelector('input[name="pageType"]:checked').value;
+  const parentId = pageType === 'child' ? document.getElementById("parentPageSelect").value : null;
+
+  fetch(`${API_BASE}/wiki`, {
+    method: "POST",
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, content: "", parent_id: parentId })
+  })
+  .then(res => res.json())
+  .then(newPage => {
+    pages.push(newPage);
+    renderPageTree();
+    fillPageSelector();
+    loadPage(newPage.id);
+    document.querySelector(".modal").remove();
+  });
+}
+
 </script>
 </body>
 </html>
